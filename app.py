@@ -25,9 +25,8 @@ def process_audio():
         
         # Convert base64 audio to file
         audio_bytes = base64.b64decode(audio_data.split(',')[1])
+        temp_audio = '/tmp/temp_audio.mp3'
         
-        # Save as temporary file
-        temp_audio = '/tmp/temp_audio.webm'
         with open(temp_audio, 'wb') as f:
             f.write(audio_bytes)
         
