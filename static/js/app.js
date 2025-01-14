@@ -21,16 +21,15 @@ function saveEmail(e) {
 
 async function startRecording() {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    // Specify the mime type explicitly for better mobile compatibility
+    // Changed to mp3 format
     const options = {
-        mimeType: 'audio/webm;codecs=opus',
+        mimeType: 'audio/webm',  // Start with webm
         audioBitsPerSecond: 128000
     };
     
     try {
         mediaRecorder = new MediaRecorder(stream, options);
     } catch (e) {
-        // Fallback for iOS
         mediaRecorder = new MediaRecorder(stream);
     }
     
@@ -39,7 +38,7 @@ async function startRecording() {
     };
     
     mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/webm;codecs=opus' });
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
         const audioUrl = URL.createObjectURL(audioBlob);
         const audioPlayer = document.getElementById('audioPlayer');
         audioPlayer.src = audioUrl;
@@ -79,8 +78,7 @@ async function sendAudioData() {
     document.getElementById('status').textContent = 'Processing...';
     document.getElementById('sendButton').disabled = true;
     
-    // Create a new blob with explicit type
-    const audioBlob = new Blob(audioChunks, { type: 'audio/webm;codecs=opus' });
+    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
     const reader = new FileReader();
     
     reader.onloadend = async () => {
@@ -95,6 +93,11 @@ async function sendAudioData() {
                     email: email
                 })
             });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to process audio');
+            }
             
             const data = await response.json();
             document.getElementById('status').textContent = data.message;
