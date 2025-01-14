@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Buddy</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>Sales Buddy</h1>
+            <div class="email-input">
+                <input type="email" id="email" placeholder="Enter your email" required>
+            </div>
+            <div class="controls">
+                <button id="recordButton" class="btn">
+                    <i class="fas fa-microphone"></i>
+                    <span>Start Recording</span>
+                </button>
+                <button id="stopButton" class="btn" disabled>
+                    <i class="fas fa-stop"></i>
+                    <span>Stop</span>
+                </button>
+            </div>
+            <div id="audioPreview" class="audio-preview" style="display: none;">
+                <audio id="audioPlayer" controls></audio>
+                <div class="preview-controls">
+                    <button id="sendButton" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i>
+                        <span>Send Transcription</span>
+                    </button>
+                    <button id="recordAgainButton" class="btn btn-secondary">
+                        <i class="fas fa-redo"></i>
+                        <span>Record Again</span>
+                    </button>
+                </div>
+            </div>
+            <div id="status"></div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
