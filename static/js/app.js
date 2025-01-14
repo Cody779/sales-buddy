@@ -1,6 +1,11 @@
 let mediaRecorder;
 let audioChunks = [];
-let audioBlob;
+
+document.getElementById('recordButton').addEventListener('click', startRecording);
+document.getElementById('stopButton').addEventListener('click', stopRecording);
+document.getElementById('sendButton').addEventListener('click', sendAudioData);
+document.getElementById('recordAgainButton').addEventListener('click', resetRecording);
+document.getElementById('email').addEventListener('change', saveEmail);
 
 // Load email from localStorage if it exists
 window.onload = function() {
@@ -10,26 +15,31 @@ window.onload = function() {
     }
 };
 
-document.getElementById('recordButton').addEventListener('click', startRecording);
-document.getElementById('stopButton').addEventListener('click', stopRecording);
-document.getElementById('sendButton').addEventListener('click', sendAudioData);
-document.getElementById('recordAgainButton').addEventListener('click', resetRecording);
-document.getElementById('email').addEventListener('change', saveEmail);
-
 function saveEmail(e) {
     localStorage.setItem('userEmail', e.target.value);
 }
 
 async function startRecording() {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    mediaRecorder = new MediaRecorder(stream);
+    // Specify the mime type explicitly for better mobile compatibility
+    const options = {
+        mimeType: 'audio/webm;codecs=opus',
+        audioBitsPerSecond: 128000
+    };
+    
+    try {
+        mediaRecorder = new MediaRecorder(stream, options);
+    } catch (e) {
+        // Fallback for iOS
+        mediaRecorder = new MediaRecorder(stream);
+    }
     
     mediaRecorder.ondataavailable = (event) => {
         audioChunks.push(event.data);
     };
     
     mediaRecorder.onstop = () => {
-        audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm;codecs=opus' });
         const audioUrl = URL.createObjectURL(audioBlob);
         const audioPlayer = document.getElementById('audioPlayer');
         audioPlayer.src = audioUrl;
@@ -69,7 +79,10 @@ async function sendAudioData() {
     document.getElementById('status').textContent = 'Processing...';
     document.getElementById('sendButton').disabled = true;
     
+    // Create a new blob with explicit type
+    const audioBlob = new Blob(audioChunks, { type: 'audio/webm;codecs=opus' });
     const reader = new FileReader();
+    
     reader.onloadend = async () => {
         try {
             const response = await fetch('/process-audio', {
