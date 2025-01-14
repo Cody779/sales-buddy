@@ -11,6 +11,9 @@ load_dotenv()
 app = Flask(__name__)
 client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
+# Add this line for Vercel
+app.debug = True
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -24,11 +27,11 @@ def process_audio():
         
         # Convert base64 audio to file
         audio_bytes = base64.b64decode(audio_data.split(',')[1])
-        with open('temp_audio.webm', 'wb') as f:
+        with open('/tmp/temp_audio.webm', 'wb') as f:  # Changed to /tmp for Vercel
             f.write(audio_bytes)
         
         # Transcribe audio using OpenAI
-        with open('temp_audio.webm', 'rb') as audio_file:
+        with open('/tmp/temp_audio.webm', 'rb') as audio_file:  # Changed to /tmp for Vercel
             transcript = client.audio.transcriptions.create(
                 model="whisper-1",
                 file=audio_file
@@ -36,7 +39,7 @@ def process_audio():
         
         # Send email using SendGrid
         message = Mail(
-            from_email='codyjgander@gmail.com',  # Replace with your verified SendGrid sender
+            from_email=os.getenv('SENDGRID_FROM_EMAIL'),
             to_emails=email,
             subject='Your Voice Memo Transcription',
             plain_text_content=transcript.text)
@@ -45,12 +48,13 @@ def process_audio():
         response = sg.send(message)
         
         # Clean up temporary file
-        os.remove('temp_audio.webm')
+        os.remove('/tmp/temp_audio.webm')  # Changed to /tmp for Vercel
         
         return jsonify({'success': True, 'message': 'Transcription sent to your email!'})
     
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})
 
+# Add this for Vercel
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=int(os.getenv('PORT', 8080)))
