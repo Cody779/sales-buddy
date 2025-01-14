@@ -20,37 +20,38 @@ function saveEmail(e) {
 }
 
 async function startRecording() {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    // Changed to mp3 format
-    const options = {
-        mimeType: 'audio/webm',  // Start with webm
-        audioBitsPerSecond: 128000
-    };
-    
     try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const options = {
+            mimeType: 'audio/webm'
+        };
+        
         mediaRecorder = new MediaRecorder(stream, options);
-    } catch (e) {
-        mediaRecorder = new MediaRecorder(stream);
+        
+        mediaRecorder.ondataavailable = (event) => {
+            audioChunks.push(event.data);
+        };
+        
+        mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            const audioUrl = URL.createObjectURL(audioBlob);
+            const audioPlayer = document.getElementById('audioPlayer');
+            audioPlayer.src = audioUrl;
+            audioPlayer.onerror = function() {
+                document.getElementById('status').textContent = 'Audio preview not available on this device, but recording was successful.';
+            };
+            document.getElementById('audioPreview').style.display = 'block';
+        };
+        
+        mediaRecorder.start();
+        document.getElementById('recordButton').disabled = true;
+        document.getElementById('recordButton').classList.add('recording');
+        document.getElementById('stopButton').disabled = false;
+        document.getElementById('status').textContent = 'Recording...';
+        document.getElementById('audioPreview').style.display = 'none';
+    } catch (error) {
+        document.getElementById('status').textContent = 'Error accessing microphone: ' + error.message;
     }
-    
-    mediaRecorder.ondataavailable = (event) => {
-        audioChunks.push(event.data);
-    };
-    
-    mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        const audioPlayer = document.getElementById('audioPlayer');
-        audioPlayer.src = audioUrl;
-        document.getElementById('audioPreview').style.display = 'block';
-    };
-    
-    mediaRecorder.start();
-    document.getElementById('recordButton').disabled = true;
-    document.getElementById('recordButton').classList.add('recording');
-    document.getElementById('stopButton').disabled = false;
-    document.getElementById('status').textContent = 'Recording...';
-    document.getElementById('audioPreview').style.display = 'none';
 }
 
 function stopRecording() {

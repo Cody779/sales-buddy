@@ -5,8 +5,6 @@ from sendgrid.helpers.mail import Mail
 import os
 from dotenv import load_dotenv
 import base64
-from pydub import AudioSegment
-import io
 
 load_dotenv()
 
@@ -28,18 +26,13 @@ def process_audio():
         # Convert base64 audio to file
         audio_bytes = base64.b64decode(audio_data.split(',')[1])
         
-        # Save as temporary webm file
-        temp_webm = '/tmp/temp_audio.webm'
-        with open(temp_webm, 'wb') as f:
+        # Save as temporary file
+        temp_audio = '/tmp/temp_audio.webm'
+        with open(temp_audio, 'wb') as f:
             f.write(audio_bytes)
         
-        # Convert to MP3 using pydub
-        audio = AudioSegment.from_file(temp_webm)
-        temp_mp3 = '/tmp/temp_audio.mp3'
-        audio.export(temp_mp3, format='mp3')
-        
         # Transcribe audio using OpenAI
-        with open(temp_mp3, 'rb') as audio_file:
+        with open(temp_audio, 'rb') as audio_file:
             transcript = client.audio.transcriptions.create(
                 model="whisper-1",
                 file=audio_file
@@ -55,9 +48,8 @@ def process_audio():
         sg = SendGridAPIClient(os.getenv('SENDGRID_API_KEY'))
         response = sg.send(message)
         
-        # Clean up temporary files
-        os.remove(temp_webm)
-        os.remove(temp_mp3)
+        # Clean up temporary file
+        os.remove(temp_audio)
         
         return jsonify({'success': True, 'message': 'Transcription sent to your email!'})
     
