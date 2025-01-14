@@ -29,14 +29,33 @@ async function startRecording() {
         };
         
         mediaRecorder.onstop = async () => {
-            const audioBlob = new Blob(audioChunks);
-            const audioUrl = URL.createObjectURL(audioBlob);
-            const audioPlayer = document.getElementById('audioPlayer');
-            audioPlayer.src = audioUrl;
-            document.getElementById('audioPreview').style.display = 'block';
+            try {
+                // Create blob with specific audio type for mobile compatibility
+                const audioBlob = new Blob(audioChunks, { type: 'audio/mpeg' });
+                const audioUrl = URL.createObjectURL(audioBlob);
+                const audioPlayer = document.getElementById('audioPlayer');
+                
+                // Add error handling for audio playback
+                audioPlayer.onerror = (e) => {
+                    console.log('Audio playback error:', e);
+                    document.getElementById('status').textContent = 
+                        'Audio preview not available, but recording was successful';
+                };
+
+                audioPlayer.onloadeddata = () => {
+                    document.getElementById('status').textContent = 'Recording ready for preview';
+                };
+
+                audioPlayer.src = audioUrl;
+                document.getElementById('audioPreview').style.display = 'block';
+            } catch (error) {
+                console.error('Preview error:', error);
+                document.getElementById('status').textContent = 
+                    'Preview not available, but recording was successful';
+            }
         };
         
-        mediaRecorder.start();
+        mediaRecorder.start(200); // Record in 200ms chunks for better compatibility
         document.getElementById('recordButton').disabled = true;
         document.getElementById('recordButton').classList.add('recording');
         document.getElementById('stopButton').disabled = false;
@@ -44,6 +63,7 @@ async function startRecording() {
         document.getElementById('audioPreview').style.display = 'none';
     } catch (error) {
         document.getElementById('status').textContent = 'Error accessing microphone: ' + error.message;
+        console.error('Recording error:', error);
     }
 }
 

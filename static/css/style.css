@@ -104,6 +104,7 @@ h1 {
 
 .audio-preview audio {
     width: 100%;
+    max-width: 300px;
     margin-bottom: 1rem;
 }
 
@@ -130,4 +131,10 @@ h1 {
 .recording {
     animation: pulse 2s infinite;
     background-color: #dc2626 !important;
+}
+
+.preview-message {
+    margin: 10px 0;
+    color: #666;
+    font-style: italic;
 }
