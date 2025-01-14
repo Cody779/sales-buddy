@@ -1,12 +1,6 @@
 let mediaRecorder;
 let audioChunks = [];
 
-document.getElementById('recordButton').addEventListener('click', startRecording);
-document.getElementById('stopButton').addEventListener('click', stopRecording);
-document.getElementById('sendButton').addEventListener('click', sendAudioData);
-document.getElementById('recordAgainButton').addEventListener('click', resetRecording);
-document.getElementById('email').addEventListener('change', saveEmail);
-
 // Load email from localStorage if it exists
 window.onload = function() {
     const savedEmail = localStorage.getItem('userEmail');
@@ -15,6 +9,12 @@ window.onload = function() {
     }
 };
 
+document.getElementById('recordButton').addEventListener('click', startRecording);
+document.getElementById('stopButton').addEventListener('click', stopRecording);
+document.getElementById('sendButton').addEventListener('click', sendAudioData);
+document.getElementById('recordAgainButton').addEventListener('click', resetRecording);
+document.getElementById('email').addEventListener('change', saveEmail);
+
 function saveEmail(e) {
     localStorage.setItem('userEmail', e.target.value);
 }
@@ -22,9 +22,25 @@ function saveEmail(e) {
 async function startRecording() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const options = {
-            mimeType: 'audio/webm'
-        };
+        
+        // Try different MIME types
+        const mimeTypes = [
+            'audio/webm',
+            'audio/webm;codecs=opus',
+            'audio/mp4',
+            'audio/ogg',
+            ''  // empty string lets browser choose best format
+        ];
+        
+        let options = {};
+        
+        // Find the first supported MIME type
+        for (let type of mimeTypes) {
+            if (type && MediaRecorder.isTypeSupported(type)) {
+                options.mimeType = type;
+                break;
+            }
+        }
         
         mediaRecorder = new MediaRecorder(stream, options);
         
@@ -33,7 +49,7 @@ async function startRecording() {
         };
         
         mediaRecorder.onstop = () => {
-            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            const audioBlob = new Blob(audioChunks);
             const audioUrl = URL.createObjectURL(audioBlob);
             const audioPlayer = document.getElementById('audioPlayer');
             audioPlayer.src = audioUrl;
@@ -51,6 +67,7 @@ async function startRecording() {
         document.getElementById('audioPreview').style.display = 'none';
     } catch (error) {
         document.getElementById('status').textContent = 'Error accessing microphone: ' + error.message;
+        console.error('Recording error:', error);
     }
 }
 
@@ -79,7 +96,7 @@ async function sendAudioData() {
     document.getElementById('status').textContent = 'Processing...';
     document.getElementById('sendButton').disabled = true;
     
-    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+    const audioBlob = new Blob(audioChunks);
     const reader = new FileReader();
     
     reader.onloadend = async () => {
