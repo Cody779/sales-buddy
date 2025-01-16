@@ -31,9 +31,9 @@
                     Preview not available on this device, but recording was successful.
                 </div>
                 <div class="preview-controls">
-                    <button id="sendButton" class="btn btn-primary">
-                        <i class="fas fa-paper-plane"></i>
-                        <span>Send Transcription</span>
+                    <button id="transcribeButton" class="btn btn-primary">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Transcribe</span>
                     </button>
                     <button id="recordAgainButton" class="btn btn-secondary">
                         <i class="fas fa-redo"></i>
@@ -41,6 +41,43 @@
                     </button>
                 </div>
             </div>
+            
+            <div id="textProcessing" class="text-processing" style="display: none;">
+                <div class="text-area-container">
+                    <textarea id="transcriptionText" class="text-content" placeholder="Transcription will appear here..." readonly></textarea>
+                </div>
+                
+                <div class="processing-controls">
+                    <button id="summarizeButton" class="btn btn-process">
+                        <i class="fas fa-compress-alt"></i>
+                        <span>Summarize</span>
+                    </button>
+                    <button id="bulletButton" class="btn btn-process">
+                        <i class="fas fa-list"></i>
+                        <span>Bullet Points</span>
+                    </button>
+                    <button id="tasksButton" class="btn btn-process">
+                        <i class="fas fa-tasks"></i>
+                        <span>Extract Tasks</span>
+                    </button>
+                </div>
+                
+                <div class="text-area-container">
+                    <textarea id="processedText" class="text-content" placeholder="Processed text will appear here..."></textarea>
+                </div>
+                
+                <div class="final-controls">
+                    <button id="sendButton" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i>
+                        <span>Send to Email</span>
+                    </button>
+                    <button id="startOverButton" class="btn btn-secondary">
+                        <i class="fas fa-redo"></i>
+                        <span>Start Over</span>
+                    </button>
+                </div>
+            </div>
+            
             <div id="status"></div>
         </div>
     </div>

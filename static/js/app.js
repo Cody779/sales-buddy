@@ -1,23 +1,36 @@
 let mediaRecorder;
 let audioChunks = [];
+let audioBlob;
 
-// Load email from localStorage if it exists
-window.onload = function() {
-    const savedEmail = localStorage.getItem('userEmail');
-    if (savedEmail) {
-        document.getElementById('email').value = savedEmail;
-    }
-};
+// DOM Elements
+const recordButton = document.getElementById('recordButton');
+const stopButton = document.getElementById('stopButton');
+const audioPreview = document.getElementById('audioPreview');
+const audioPlayer = document.getElementById('audioPlayer');
+const previewMessage = document.querySelector('.preview-message');
+const transcribeButton = document.getElementById('transcribeButton');
+const recordAgainButton = document.getElementById('recordAgainButton');
+const emailInput = document.getElementById('email');
+const statusDiv = document.getElementById('status');
+const textProcessing = document.getElementById('textProcessing');
+const transcriptionText = document.getElementById('transcriptionText');
+const processedText = document.getElementById('processedText');
+const summarizeButton = document.getElementById('summarizeButton');
+const bulletButton = document.getElementById('bulletButton');
+const tasksButton = document.getElementById('tasksButton');
+const sendButton = document.getElementById('sendButton');
+const startOverButton = document.getElementById('startOverButton');
 
-document.getElementById('recordButton').addEventListener('click', startRecording);
-document.getElementById('stopButton').addEventListener('click', stopRecording);
-document.getElementById('sendButton').addEventListener('click', sendAudioData);
-document.getElementById('recordAgainButton').addEventListener('click', resetRecording);
-document.getElementById('email').addEventListener('change', saveEmail);
-
-function saveEmail(e) {
-    localStorage.setItem('userEmail', e.target.value);
-}
+// Event Listeners
+recordButton.addEventListener('click', startRecording);
+stopButton.addEventListener('click', stopRecording);
+transcribeButton.addEventListener('click', transcribeAudio);
+recordAgainButton.addEventListener('click', resetRecording);
+summarizeButton.addEventListener('click', () => processText('summary'));
+bulletButton.addEventListener('click', () => processText('bullets'));
+tasksButton.addEventListener('click', () => processText('tasks'));
+sendButton.addEventListener('click', sendEmail);
+startOverButton.addEventListener('click', startOver);
 
 async function startRecording() {
     try {
@@ -29,125 +42,192 @@ async function startRecording() {
         };
         
         mediaRecorder.onstop = async () => {
+            audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            const audioUrl = URL.createObjectURL(audioBlob);
+            
             try {
-                // Create blob with specific audio type for mobile compatibility
-                const audioBlob = new Blob(audioChunks, { type: 'audio/mpeg' });
-                const audioUrl = URL.createObjectURL(audioBlob);
-                const audioPlayer = document.getElementById('audioPlayer');
-                
-                // Add error handling for audio playback
-                audioPlayer.onerror = (e) => {
-                    console.log('Audio playback error:', e);
-                    document.getElementById('status').textContent = 
-                        'Audio preview not available, but recording was successful';
-                };
-
-                audioPlayer.onloadeddata = () => {
-                    document.getElementById('status').textContent = 'Recording ready for preview';
-                };
-
                 audioPlayer.src = audioUrl;
-                document.getElementById('audioPreview').style.display = 'block';
-            } catch (error) {
-                console.error('Preview error:', error);
-                document.getElementById('status').textContent = 
-                    'Preview not available, but recording was successful';
+                audioPreview.style.display = 'block';
+                previewMessage.style.display = 'none';
+            } catch (e) {
+                previewMessage.style.display = 'block';
             }
         };
         
-        mediaRecorder.start(200); // Record in 200ms chunks for better compatibility
-        document.getElementById('recordButton').disabled = true;
-        document.getElementById('recordButton').classList.add('recording');
-        document.getElementById('stopButton').disabled = false;
-        document.getElementById('status').textContent = 'Recording...';
-        document.getElementById('audioPreview').style.display = 'none';
-    } catch (error) {
-        document.getElementById('status').textContent = 'Error accessing microphone: ' + error.message;
-        console.error('Recording error:', error);
+        audioChunks = [];
+        mediaRecorder.start();
+        recordButton.classList.add('recording');
+        updateButtonStates(true);
+        updateStatus('Recording...');
+        
+    } catch (err) {
+        console.error('Error accessing microphone:', err);
+        updateStatus('Error accessing microphone. Please ensure you have granted permission.');
     }
 }
 
 function stopRecording() {
     mediaRecorder.stop();
     mediaRecorder.stream.getTracks().forEach(track => track.stop());
-    document.getElementById('recordButton').disabled = false;
-    document.getElementById('recordButton').classList.remove('recording');
-    document.getElementById('stopButton').disabled = true;
-    document.getElementById('status').textContent = 'Recording complete. Review your audio below.';
+    recordButton.classList.remove('recording');
+    updateButtonStates(false);
+    updateStatus('Recording stopped. Ready to transcribe.');
 }
 
 function resetRecording() {
     audioChunks = [];
-    document.getElementById('audioPreview').style.display = 'none';
-    document.getElementById('status').textContent = '';
+    audioBlob = null;
+    audioPreview.style.display = 'none';
+    textProcessing.style.display = 'none';
+    updateButtonStates(false);
+    updateStatus('');
 }
 
-async function convertToMp3(audioBlob) {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const arrayBuffer = await audioBlob.arrayBuffer();
-    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-    
-    const mp3Encoder = new lamejs.Mp3Encoder(1, audioBuffer.sampleRate, 128);
-    const samples = new Int16Array(audioBuffer.length);
-    const channel = audioBuffer.getChannelData(0);
-    
-    for (let i = 0; i < channel.length; i++) {
-        samples[i] = channel[i] * 0x7FFF;
-    }
-    
-    const mp3Data = mp3Encoder.encodeBuffer(samples);
-    const mp3Blob = new Blob([new Uint8Array(mp3Data)], { type: 'audio/mp3' });
-    return mp3Blob;
+function startOver() {
+    resetRecording();
+    transcriptionText.value = '';
+    processedText.value = '';
+    emailInput.value = '';
 }
 
-async function sendAudioData() {
-    const email = document.getElementById('email').value;
-    if (!email) {
-        alert('Please enter your email address');
+async function transcribeAudio() {
+    if (!audioBlob) {
+        updateStatus('No recording available to transcribe.');
         return;
     }
-    
-    document.getElementById('status').textContent = 'Processing...';
-    document.getElementById('sendButton').disabled = true;
-    
+
+    updateStatus('Transcribing audio...');
+    setLoading(true);
+
     try {
-        const audioBlob = new Blob(audioChunks);
-        const mp3Blob = await convertToMp3(audioBlob);
+        // Convert audio blob to base64
         const reader = new FileReader();
-        
+        reader.readAsDataURL(audioBlob);
         reader.onloadend = async () => {
-            try {
-                const response = await fetch('/process-audio', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        audio: reader.result,
-                        email: email
-                    })
-                });
-                
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Failed to process audio');
-                }
-                
-                const data = await response.json();
-                document.getElementById('status').textContent = data.message;
-                if (data.success) {
-                    document.getElementById('audioPreview').style.display = 'none';
-                    audioChunks = [];
-                }
-            } catch (error) {
-                document.getElementById('status').textContent = 'Error: ' + error.message;
+            const base64Audio = reader.result;
+            
+            const response = await fetch('/process-audio', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    audio: base64Audio
+                })
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                transcriptionText.value = data.transcription;
+                textProcessing.style.display = 'block';
+                updateStatus('Audio transcribed successfully! You can now process the text.');
+            } else {
+                updateStatus('Error transcribing audio: ' + data.message);
             }
         };
-        
-        reader.readAsDataURL(mp3Blob);
     } catch (error) {
-        document.getElementById('status').textContent = 'Error converting audio: ' + error.message;
+        console.error('Error:', error);
+        updateStatus('Error transcribing audio. Please try again.');
     } finally {
-        document.getElementById('sendButton').disabled = false;
+        setLoading(false);
     }
+}
+
+async function processText(type) {
+    if (!transcriptionText.value) {
+        updateStatus('No text to process.');
+        return;
+    }
+
+    updateStatus(`Processing text as ${type}...`);
+    setLoading(true);
+
+    try {
+        const response = await fetch('/process-text', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                text: transcriptionText.value,
+                type: type
+            })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            processedText.value = data.processed_text;
+            updateStatus('Text processed successfully!');
+        } else {
+            updateStatus('Error processing text: ' + data.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        updateStatus('Error processing text. Please try again.');
+    } finally {
+        setLoading(false);
+    }
+}
+
+async function sendEmail() {
+    const email = emailInput.value;
+    const content = processedText.value || transcriptionText.value;
+
+    if (!email) {
+        updateStatus('Please enter an email address.');
+        return;
+    }
+
+    if (!content) {
+        updateStatus('No content to send.');
+        return;
+    }
+
+    updateStatus('Sending email...');
+    setLoading(true);
+
+    try {
+        const response = await fetch('/send-email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                email: email,
+                content: content
+            })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            updateStatus('Email sent successfully!');
+            setTimeout(startOver, 3000);
+        } else {
+            updateStatus('Error sending email: ' + data.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        updateStatus('Error sending email. Please try again.');
+    } finally {
+        setLoading(false);
+    }
+}
+
+function updateButtonStates(isRecording) {
+    recordButton.disabled = isRecording;
+    stopButton.disabled = !isRecording;
+    transcribeButton.disabled = isRecording;
+}
+
+function updateStatus(message) {
+    statusDiv.textContent = message;
+}
+
+function setLoading(isLoading) {
+    document.body.classList.toggle('loading', isLoading);
+    const buttons = document.querySelectorAll('.btn');
+    buttons.forEach(button => button.disabled = isLoading);
 }
