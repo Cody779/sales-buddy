@@ -172,6 +172,9 @@ def process_text():
         })
         
     except Exception as e:
+        print(f"Error in process_text: {str(e)}")  # Add logging
+        import traceback
+        print("Full error:", traceback.format_exc())  # Print full stack trace
         return jsonify({'success': False, 'message': str(e)}), 400
 
 @app.route('/send-email', methods=['POST'])

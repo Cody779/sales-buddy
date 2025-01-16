@@ -335,8 +335,7 @@ function initializeApp() {
                 },
                 body: JSON.stringify({
                     text: transcriptionText.value,
-                    type: type,
-                    style: style
+                    type: type
                 })
             });
 
@@ -346,7 +345,7 @@ function initializeApp() {
                 processedText.value = data.processed_text;
                 updateStatus('Text processed successfully!');
             } else {
-                updateStatus('Error processing text: ' + data.message);
+                throw new Error(data.message || 'Processing failed');
             }
         } catch (error) {
             console.error('Error:', error);
