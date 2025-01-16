@@ -123,12 +123,50 @@ function initializeApp() {
                 
                 const audioUrl = URL.createObjectURL(audioBlob);
                 try {
+                    // Create a temporary audio element to get duration
+                    const tempAudio = new Audio();
+                    
+                    // Wait for metadata to load before setting the player source
+                    await new Promise((resolve, reject) => {
+                        tempAudio.addEventListener('loadedmetadata', () => {
+                            console.log('Audio duration:', tempAudio.duration);
+                            resolve();
+                        });
+                        tempAudio.addEventListener('error', (e) => {
+                            console.error('Error loading audio metadata:', e);
+                            reject(e);
+                        });
+                        tempAudio.src = audioUrl;
+                    });
+                    
+                    // Now set the actual player source
                     audioPlayer.src = audioUrl;
-                    audioPlayer.load(); // Force reload
+                    
+                    // Force a reload and wait for metadata
+                    await new Promise((resolve) => {
+                        audioPlayer.addEventListener('loadedmetadata', () => {
+                            console.log('Player duration:', audioPlayer.duration);
+                            resolve();
+                        }, { once: true });
+                        audioPlayer.load();
+                    });
+                    
                     audioPreview.style.display = 'block';
                     previewMessage.style.display = 'none';
+                    
+                    // Update time display
+                    const duration = audioPlayer.duration;
+                    console.log('Final duration:', duration);
+                    
+                    // Add timeupdate listener for progress
+                    audioPlayer.addEventListener('timeupdate', () => {
+                        const currentTime = audioPlayer.currentTime;
+                        const progress = (currentTime / duration) * 100;
+                        console.log('Progress:', progress + '%');
+                    });
+                    
                 } catch (e) {
-                    console.error('Error setting up audio preview:', e);
+                    console.error('Error setting up audio player:', e);
                     previewMessage.style.display = 'block';
                 }
             };
