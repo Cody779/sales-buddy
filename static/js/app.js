@@ -84,34 +84,73 @@ function initializeApp() {
 
     async function startRecording() {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
+            console.log('Requesting microphone access...');
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    channelCount: 1,
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    sampleRate: 44100
+                }
+            });
+            console.log('Microphone access granted');
+            
+            mediaRecorder = new MediaRecorder(stream, {
+                mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4',
+                audioBitsPerSecond: 128000
+            });
+            
+            console.log('MediaRecorder initialized with settings:', {
+                mimeType: mediaRecorder.mimeType,
+                state: mediaRecorder.state
+            });
             
             mediaRecorder.ondataavailable = (event) => {
-                audioChunks.push(event.data);
+                console.log('Data available from MediaRecorder, size:', event.data.size);
+                if (event.data.size > 0) {
+                    audioChunks.push(event.data);
+                }
             };
             
             mediaRecorder.onstop = async () => {
-                audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                const audioUrl = URL.createObjectURL(audioBlob);
+                console.log('MediaRecorder stopped, creating blob...');
+                const mimeType = mediaRecorder.mimeType;
+                audioBlob = new Blob(audioChunks, { type: mimeType });
+                console.log('Audio blob created:', {
+                    type: audioBlob.type,
+                    size: audioBlob.size
+                });
                 
+                const audioUrl = URL.createObjectURL(audioBlob);
                 try {
                     audioPlayer.src = audioUrl;
+                    audioPlayer.load(); // Force reload
                     audioPreview.style.display = 'block';
                     previewMessage.style.display = 'none';
+                    
+                    // Test audio playback
+                    const testPlay = await audioPlayer.play().catch(e => {
+                        console.log('Initial playback test failed:', e);
+                        audioPlayer.pause();
+                    });
+                    console.log('Audio playback test completed');
                 } catch (e) {
+                    console.error('Error setting up audio preview:', e);
                     previewMessage.style.display = 'block';
                 }
             };
             
             audioChunks = [];
-            mediaRecorder.start();
+            mediaRecorder.start(1000); // Collect data every second
+            console.log('MediaRecorder started');
             recordButton.classList.add('recording');
             updateButtonStates(true);
             updateStatus('Recording...');
             
         } catch (err) {
-            console.error('Error accessing microphone:', err);
+            console.error('Detailed error accessing microphone:', err);
+            console.error('Error name:', err.name);
+            console.error('Error message:', err.message);
             updateStatus('Error accessing microphone. Please ensure you have granted permission.');
         }
     }
