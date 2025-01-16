@@ -122,34 +122,55 @@ h1 {
 .audio-preview {
     margin: 1.5rem 0;
     text-align: center;
+    background: var(--card-background);
+    border-radius: 8px;
+    padding: 1rem;
 }
 
 .audio-preview audio {
     width: 100%;
-    max-width: 300px;
+    max-width: 400px;
     margin-bottom: 1rem;
-    filter: invert(1);
 }
 
 .preview-controls {
     display: flex;
     gap: 1rem;
     justify-content: center;
+    margin-top: 1rem;
+    flex-direction: row;
 }
 
-/* Remove the custom audio player styling that was causing issues */
-audio::-webkit-media-controls-panel,
-audio::-webkit-media-controls-play-button,
+/* Custom audio player styling */
+audio::-webkit-media-controls-enclosure {
+    border-radius: 0;
+    background-color: var(--card-background);
+}
+
+audio::-webkit-media-controls-panel {
+    border-radius: 0;
+    background-color: var(--card-background);
+}
+
+/* Hide the circular edges */
+audio::-webkit-media-controls-timeline-container {
+    padding-left: 0;
+    padding-right: 0;
+}
+
 audio::-webkit-media-controls-current-time-display,
-audio::-webkit-media-controls-time-remaining-display,
-audio::-webkit-media-controls-timeline,
+audio::-webkit-media-controls-time-remaining-display {
+    color: var(--text-color);
+}
+
+audio::-webkit-media-controls-timeline {
+    border-radius: 0;
+    margin: 0;
+}
+
 audio::-webkit-media-controls-volume-slider {
-    /* Reset any custom styling */
-    background-color: initial;
-    border-radius: initial;
-    transform: initial;
-    padding: initial;
-    margin: initial;
+    border-radius: 0;
+    background-color: var(--card-background);
 }
 
 #status {
