@@ -49,22 +49,19 @@ def process_audio():
         data = request.json
         audio_data = data['audio']
         
-        # Convert base64 audio to file
+        # Convert base64 audio to bytes
         audio_bytes = base64.b64decode(audio_data.split(',')[1])
-        temp_audio = '/tmp/temp_audio.mp3'
         
-        with open(temp_audio, 'wb') as f:
-            f.write(audio_bytes)
+        # Create a BytesIO object instead of writing to disk
+        from io import BytesIO
+        audio_file = BytesIO(audio_bytes)
+        audio_file.name = 'audio.mp3'  # Whisper needs a filename
         
         # Transcribe audio using OpenAI
-        with open(temp_audio, 'rb') as audio_file:
-            transcript = client.audio.transcriptions.create(
-                model="whisper-1",
-                file=audio_file
-            )
-        
-        # Clean up temporary file
-        os.remove(temp_audio)
+        transcript = client.audio.transcriptions.create(
+            model="whisper-1",
+            file=audio_file
+        )
         
         return jsonify({
             'success': True, 
@@ -72,6 +69,7 @@ def process_audio():
         })
     
     except Exception as e:
+        print(f"Error in process_audio: {str(e)}")  # Add logging
         return jsonify({'success': False, 'message': str(e)}), 400
 
 @app.route('/process-text', methods=['POST'])

@@ -102,33 +102,40 @@ async function transcribeAudio() {
     try {
         // Convert audio blob to base64
         const reader = new FileReader();
+        
+        const readerPromise = new Promise((resolve, reject) => {
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = () => reject(reader.error);
+        });
+        
         reader.readAsDataURL(audioBlob);
-        reader.onloadend = async () => {
-            const base64Audio = reader.result;
-            
-            const response = await fetch('/process-audio', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    audio: base64Audio
-                })
-            });
+        const base64Audio = await readerPromise;
+        
+        console.log('Sending audio for transcription...');  // Debug log
+        const response = await fetch('/process-audio', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                audio: base64Audio
+            })
+        });
 
-            const data = await response.json();
-            
-            if (data.success) {
-                transcriptionText.value = data.transcription;
-                textProcessing.style.display = 'block';
-                updateStatus('Audio transcribed successfully! You can now process the text.');
-            } else {
-                updateStatus('Error transcribing audio: ' + data.message);
-            }
-        };
+        console.log('Received response:', response.status);  // Debug log
+        const data = await response.json();
+        console.log('Response data:', data);  // Debug log
+        
+        if (data.success) {
+            transcriptionText.value = data.transcription;
+            textProcessing.style.display = 'block';
+            updateStatus('Audio transcribed successfully! You can now process the text.');
+        } else {
+            throw new Error(data.message || 'Transcription failed');
+        }
     } catch (error) {
-        console.error('Error:', error);
-        updateStatus('Error transcribing audio. Please try again.');
+        console.error('Transcription error:', error);
+        updateStatus('Error transcribing audio: ' + error.message);
     } finally {
         setLoading(false);
     }
