@@ -37,18 +37,26 @@ function initializeApp() {
 
     // Test click handler
     if (transcribeButton) {
-        transcribeButton.onclick = function(e) {
-            console.log('Transcribe button clicked via onclick');
+        console.log('Setting up transcribe button click handler');
+        transcribeButton.addEventListener('click', function(e) {
+            console.log('Transcribe button clicked');
             e.preventDefault();
+            e.stopPropagation();
             transcribeAudio();
-        };
+        });
     } else {
         console.error('Transcribe button not found');
     }
 
     // Event Listeners
-    if (recordButton) recordButton.addEventListener('click', startRecording);
-    if (stopButton) stopButton.addEventListener('click', stopRecording);
+    if (recordButton) {
+        console.log('Setting up record button');
+        recordButton.addEventListener('click', startRecording);
+    }
+    if (stopButton) {
+        console.log('Setting up stop button');
+        stopButton.addEventListener('click', stopRecording);
+    }
     if (recordAgainButton) recordAgainButton.addEventListener('click', resetRecording);
     if (summarizeButton) summarizeButton.addEventListener('click', () => processText('summary'));
     if (bulletButton) bulletButton.addEventListener('click', () => processText('bullets'));
@@ -126,6 +134,11 @@ function initializeApp() {
 
     async function transcribeAudio() {
         console.log('transcribeAudio function called');
+        console.log('audioBlob:', audioBlob ? {
+            type: audioBlob.type,
+            size: audioBlob.size
+        } : 'No audio blob');
+        
         if (!audioBlob) {
             console.log('No audio blob available');
             updateStatus('No recording available to transcribe.');
@@ -153,7 +166,7 @@ function initializeApp() {
             console.log('Starting to read audio blob');
             reader.readAsDataURL(audioBlob);
             const base64Audio = await readerPromise;
-            console.log('Audio converted to base64');
+            console.log('Audio converted to base64, length:', base64Audio.length);
             
             const apiUrl = window.location.origin + '/process-audio';
             console.log('Sending request to:', apiUrl);
@@ -169,6 +182,12 @@ function initializeApp() {
             });
 
             console.log('Response status:', response.status);
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Error response:', errorText);
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
             const data = await response.json();
             console.log('Response data:', data);
             
