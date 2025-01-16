@@ -389,7 +389,6 @@ function initializeApp() {
             
             if (data.success) {
                 updateStatus('Email sent successfully!');
-                setTimeout(startOver, 3000);
             } else {
                 updateStatus('Error sending email: ' + data.message);
             }
