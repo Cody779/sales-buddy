@@ -21,16 +21,36 @@ const tasksButton = document.getElementById('tasksButton');
 const sendButton = document.getElementById('sendButton');
 const startOverButton = document.getElementById('startOverButton');
 
+// Debug logging for element initialization
+console.log('Initializing elements:', {
+    recordButton: !!recordButton,
+    stopButton: !!stopButton,
+    transcribeButton: !!transcribeButton,
+    audioPreview: !!audioPreview
+});
+
 // Event Listeners
-recordButton.addEventListener('click', startRecording);
-stopButton.addEventListener('click', stopRecording);
-transcribeButton.addEventListener('click', transcribeAudio);
-recordAgainButton.addEventListener('click', resetRecording);
-summarizeButton.addEventListener('click', () => processText('summary'));
-bulletButton.addEventListener('click', () => processText('bullets'));
-tasksButton.addEventListener('click', () => processText('tasks'));
-sendButton.addEventListener('click', sendEmail);
-startOverButton.addEventListener('click', startOver);
+if (recordButton) recordButton.addEventListener('click', startRecording);
+if (stopButton) stopButton.addEventListener('click', stopRecording);
+if (transcribeButton) {
+    console.log('Adding click listener to transcribe button');
+    transcribeButton.addEventListener('click', () => {
+        console.log('Transcribe button clicked');
+        transcribeAudio();
+    });
+}
+if (recordAgainButton) recordAgainButton.addEventListener('click', resetRecording);
+if (summarizeButton) summarizeButton.addEventListener('click', () => processText('summary'));
+if (bulletButton) bulletButton.addEventListener('click', () => processText('bullets'));
+if (tasksButton) tasksButton.addEventListener('click', () => processText('tasks'));
+if (sendButton) sendButton.addEventListener('click', sendEmail);
+if (startOverButton) startOverButton.addEventListener('click', startOver);
+
+// Initialize button states
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM Content Loaded');
+    updateButtonStates(false);
+});
 
 async function startRecording() {
     try {
