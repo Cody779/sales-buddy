@@ -1,0 +1,5 @@
+[33m517eaca[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Redesign UI with modern chat interface and dark theme
+[33m5088523[m Fix audio duration and progress bar timing issues
+[33m0cf568b[m Improve loading circle position and audio player controls
+[33m251712d[m Fix audio player styling and button layout
+[33m1518ead[m Restore original button styling while maintaining audio functionality
