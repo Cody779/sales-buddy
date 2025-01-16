@@ -91,6 +91,9 @@ function startOver() {
 }
 
 async function transcribeAudio() {
+    console.log('transcribeAudio function called');
+    console.log('audioBlob:', audioBlob);
+    
     if (!audioBlob) {
         updateStatus('No recording available to transcribe.');
         return;
@@ -102,17 +105,28 @@ async function transcribeAudio() {
     try {
         // Convert audio blob to base64
         const reader = new FileReader();
+        console.log('Created FileReader');
         
         const readerPromise = new Promise((resolve, reject) => {
-            reader.onloadend = () => resolve(reader.result);
-            reader.onerror = () => reject(reader.error);
+            reader.onloadend = () => {
+                console.log('FileReader loadend event fired');
+                resolve(reader.result);
+            };
+            reader.onerror = () => {
+                console.error('FileReader error:', reader.error);
+                reject(reader.error);
+            };
         });
         
+        console.log('Starting to read audio blob');
         reader.readAsDataURL(audioBlob);
         const base64Audio = await readerPromise;
+        console.log('Audio converted to base64');
         
-        console.log('Sending audio for transcription...');  // Debug log
-        const response = await fetch('/process-audio', {
+        const apiUrl = window.location.origin + '/process-audio';
+        console.log('Sending request to:', apiUrl);
+        
+        const response = await fetch(apiUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -122,9 +136,11 @@ async function transcribeAudio() {
             })
         });
 
-        console.log('Received response:', response.status);  // Debug log
+        console.log('Response status:', response.status);
+        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+        
         const data = await response.json();
-        console.log('Response data:', data);  // Debug log
+        console.log('Response data:', data);
         
         if (data.success) {
             transcriptionText.value = data.transcription;

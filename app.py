@@ -45,23 +45,31 @@ def index():
 
 @app.route('/process-audio', methods=['POST'])
 def process_audio():
+    print("Process audio endpoint called")  # Debug log
     try:
         data = request.json
+        print("Received request data:", bool(data))  # Debug log
+        
         audio_data = data['audio']
+        print("Got audio data, length:", len(audio_data))  # Debug log
         
         # Convert base64 audio to bytes
         audio_bytes = base64.b64decode(audio_data.split(',')[1])
+        print("Decoded base64 data, size:", len(audio_bytes))  # Debug log
         
         # Create a BytesIO object instead of writing to disk
         from io import BytesIO
         audio_file = BytesIO(audio_bytes)
         audio_file.name = 'audio.mp3'  # Whisper needs a filename
+        print("Created BytesIO object")  # Debug log
         
         # Transcribe audio using OpenAI
+        print("Starting OpenAI transcription...")  # Debug log
         transcript = client.audio.transcriptions.create(
             model="whisper-1",
             file=audio_file
         )
+        print("Transcription completed:", bool(transcript))  # Debug log
         
         return jsonify({
             'success': True, 
@@ -70,6 +78,8 @@ def process_audio():
     
     except Exception as e:
         print(f"Error in process_audio: {str(e)}")  # Add logging
+        import traceback
+        print("Full error:", traceback.format_exc())  # Print full stack trace
         return jsonify({'success': False, 'message': str(e)}), 400
 
 @app.route('/process-text', methods=['POST'])
