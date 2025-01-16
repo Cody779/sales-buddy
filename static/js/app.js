@@ -72,6 +72,9 @@ function stopRecording() {
     recordButton.classList.remove('recording');
     updateButtonStates(false);
     updateStatus('Recording stopped. Ready to transcribe.');
+    setTimeout(() => {
+        transcribeButton.disabled = false;
+    }, 500);
 }
 
 function resetRecording() {
@@ -80,6 +83,7 @@ function resetRecording() {
     audioPreview.style.display = 'none';
     textProcessing.style.display = 'none';
     updateButtonStates(false);
+    transcribeButton.disabled = true;
     updateStatus('');
 }
 
@@ -243,6 +247,12 @@ function updateButtonStates(isRecording) {
     recordButton.disabled = isRecording;
     stopButton.disabled = !isRecording;
     transcribeButton.disabled = isRecording;
+    
+    if (!isRecording && audioBlob) {
+        transcribeButton.disabled = false;
+    } else {
+        transcribeButton.disabled = true;
+    }
 }
 
 function updateStatus(message) {

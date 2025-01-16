@@ -83,7 +83,14 @@ h1 {
 
 .btn:disabled {
     opacity: 0.5;
-    cursor: not-allowed;
+    cursor: not-allowed !important;
+    pointer-events: none;
+}
+
+/* Ensure disabled buttons show correct cursor */
+button[disabled] {
+    cursor: not-allowed !important;
+    pointer-events: none;
 }
 
 .btn i {
