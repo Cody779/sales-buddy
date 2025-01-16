@@ -58,9 +58,21 @@ function initializeApp() {
         stopButton.addEventListener('click', stopRecording);
     }
     if (recordAgainButton) recordAgainButton.addEventListener('click', resetRecording);
-    if (summarizeButton) summarizeButton.addEventListener('click', () => processText('summary'));
-    if (bulletButton) bulletButton.addEventListener('click', () => processText('bullets'));
-    if (tasksButton) tasksButton.addEventListener('click', () => processText('tasks'));
+    if (summarizeButton) summarizeButton.addEventListener('click', () => {
+        hideAllStyleSelects();
+        summaryStyle.style.display = 'block';
+        processText('summary', summaryStyle.value);
+    });
+    if (bulletButton) bulletButton.addEventListener('click', () => {
+        hideAllStyleSelects();
+        bulletStyle.style.display = 'block';
+        processText('bullets', bulletStyle.value);
+    });
+    if (tasksButton) tasksButton.addEventListener('click', () => {
+        hideAllStyleSelects();
+        taskStyle.style.display = 'block';
+        processText('tasks', taskStyle.value);
+    });
     if (sendButton) sendButton.addEventListener('click', sendEmail);
     if (startOverButton) startOverButton.addEventListener('click', startOver);
 
@@ -206,14 +218,44 @@ function initializeApp() {
         }
     }
 
-    async function processText(type) {
+    async function processText(type, style) {
         if (!transcriptionText.value) {
             updateStatus('No text to process.');
             return;
         }
 
+        const loadingMessages = {
+            summary: [
+                "Analyzing content...",
+                "Identifying key points...",
+                "Crafting concise summary...",
+                "Finalizing your summary..."
+            ],
+            bullets: [
+                "Analyzing content...",
+                "Organizing information...",
+                "Creating bullet points...",
+                "Structuring your points..."
+            ],
+            tasks: [
+                "Analyzing content...",
+                "Identifying action items...",
+                "Extracting tasks...",
+                "Organizing your task list..."
+            ]
+        };
+
+        const messages = loadingMessages[type] || loadingMessages.summary;
+        let messageIndex = 0;
+
         updateStatus(`Processing text as ${type}...`);
-        setLoading(true);
+        setLoading(true, messages[0]);
+
+        // Start message rotation
+        const messageInterval = setInterval(() => {
+            messageIndex = (messageIndex + 1) % messages.length;
+            setLoadingText(messages[messageIndex]);
+        }, 2000);
 
         try {
             const response = await fetch('/process-text', {
@@ -223,7 +265,8 @@ function initializeApp() {
                 },
                 body: JSON.stringify({
                     text: transcriptionText.value,
-                    type: type
+                    type: type,
+                    style: style
                 })
             });
 
@@ -239,6 +282,7 @@ function initializeApp() {
             console.error('Error:', error);
             updateStatus('Error processing text. Please try again.');
         } finally {
+            clearInterval(messageInterval);
             setLoading(false);
         }
     }
@@ -306,10 +350,51 @@ function initializeApp() {
         }
     }
 
-    function setLoading(isLoading) {
+    function setLoading(isLoading, loadingText = '') {
         document.body.classList.toggle('loading', isLoading);
+        if (isLoading) {
+            document.body.setAttribute('data-loading-text', loadingText);
+        } else {
+            document.body.removeAttribute('data-loading-text');
+        }
         const buttons = document.querySelectorAll('.btn');
         buttons.forEach(button => button.disabled = isLoading);
+    }
+
+    function setLoadingText(text) {
+        if (document.body.classList.contains('loading')) {
+            document.body.setAttribute('data-loading-text', text);
+        }
+    }
+
+    // Add style select elements
+    const summaryStyle = document.getElementById('summaryStyle');
+    const bulletStyle = document.getElementById('bulletStyle');
+    const taskStyle = document.getElementById('taskStyle');
+
+    // Show/hide appropriate style select when buttons are clicked
+    summarizeButton.addEventListener('click', () => {
+        hideAllStyleSelects();
+        summaryStyle.style.display = 'block';
+        processText('summary', summaryStyle.value);
+    });
+
+    bulletButton.addEventListener('click', () => {
+        hideAllStyleSelects();
+        bulletStyle.style.display = 'block';
+        processText('bullets', bulletStyle.value);
+    });
+
+    tasksButton.addEventListener('click', () => {
+        hideAllStyleSelects();
+        taskStyle.style.display = 'block';
+        processText('tasks', taskStyle.value);
+    });
+
+    function hideAllStyleSelects() {
+        summaryStyle.style.display = 'none';
+        bulletStyle.style.display = 'none';
+        taskStyle.style.display = 'none';
     }
 }
 

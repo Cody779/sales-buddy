@@ -11,14 +11,14 @@
 <body>
     <div class="container">
         <div class="card">
-            <h1>Sales Buddy</h1>
+            <h1>Sales Buddy AI</h1>
             <div class="email-input">
-                <input type="email" id="email" placeholder="Enter your email" required>
+                <input type="email" id="email" placeholder="Enter your email address..." required>
             </div>
             <div class="controls">
                 <button id="recordButton" class="btn">
                     <i class="fas fa-microphone"></i>
-                    <span>Start Recording</span>
+                    <span>Record</span>
                 </button>
                 <button id="stopButton" class="btn" disabled>
                     <i class="fas fa-stop"></i>
@@ -28,7 +28,7 @@
             <div id="audioPreview" class="audio-preview" style="display: none;">
                 <audio id="audioPlayer" controls></audio>
                 <div class="preview-message" style="display: none;">
-                    Preview not available on this device, but recording was successful.
+                    Preview not available on this device
                 </div>
                 <div class="preview-controls">
                     <button id="transcribeButton" class="btn btn-primary" type="button">
@@ -44,22 +44,41 @@
             
             <div id="textProcessing" class="text-processing" style="display: none;">
                 <div class="text-area-container">
-                    <textarea id="transcriptionText" class="text-content" placeholder="Transcription will appear here..." readonly></textarea>
+                    <textarea id="transcriptionText" class="text-content" placeholder="Your transcription will appear here..." readonly></textarea>
                 </div>
                 
                 <div class="processing-controls">
-                    <button id="summarizeButton" class="btn btn-process">
-                        <i class="fas fa-compress-alt"></i>
-                        <span>Summarize</span>
-                    </button>
-                    <button id="bulletButton" class="btn btn-process">
-                        <i class="fas fa-list"></i>
-                        <span>Bullet Points</span>
-                    </button>
-                    <button id="tasksButton" class="btn btn-process">
-                        <i class="fas fa-tasks"></i>
-                        <span>Extract Tasks</span>
-                    </button>
+                    <div class="processing-options">
+                        <select id="summaryStyle" class="style-select" style="display: none;">
+                            <option value="concise">Concise</option>
+                            <option value="detailed">Detailed</option>
+                            <option value="executive">Executive Summary</option>
+                        </select>
+                        <select id="bulletStyle" class="style-select" style="display: none;">
+                            <option value="hierarchical">Hierarchical</option>
+                            <option value="flat">Flat List</option>
+                            <option value="categorized">Categorized</option>
+                        </select>
+                        <select id="taskStyle" class="style-select" style="display: none;">
+                            <option value="priority">By Priority</option>
+                            <option value="deadline">By Deadline</option>
+                            <option value="category">By Category</option>
+                        </select>
+                    </div>
+                    <div class="button-group">
+                        <button id="summarizeButton" class="btn btn-process">
+                            <i class="fas fa-compress-alt"></i>
+                            <span>Summarize</span>
+                        </button>
+                        <button id="bulletButton" class="btn btn-process">
+                            <i class="fas fa-list"></i>
+                            <span>Bullet Points</span>
+                        </button>
+                        <button id="tasksButton" class="btn btn-process">
+                            <i class="fas fa-tasks"></i>
+                            <span>Extract Tasks</span>
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="text-area-container">
@@ -81,7 +100,6 @@
             <div id="status"></div>
         </div>
     </div>
-    <!-- Add immediate test script -->
     <script>
         console.log('Initial script test');
         window.addEventListener('load', function() {

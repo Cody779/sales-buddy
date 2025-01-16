@@ -28,11 +28,33 @@ def get_or_create_assistant():
     # Create new assistant if none exists
     assistant = client.beta.assistants.create(
         name="Sales Buddy Assistant",
-        instructions="""You are a helpful assistant that processes transcribed text. You can:
-        1. Create concise summaries
-        2. Convert text to organized bullet points
-        3. Extract actionable tasks into a to-do list
-        Always maintain the key information while making the content more organized and readable.""",
+        instructions="""You are a specialized assistant for processing sales and business-related transcriptions. Your role is to make the content more organized and actionable.
+
+For summaries:
+- Focus on key business points, decisions, and action items
+- Maintain a professional tone
+- Highlight any monetary values, dates, or deadlines mentioned
+- Keep the summary concise but comprehensive
+- Include any specific numbers or metrics mentioned
+
+For bullet points:
+- Start with the most important information
+- Group related points together
+- Use consistent formatting
+- Highlight key stakeholders and their responsibilities
+- Include specific details like numbers, dates, and deadlines
+- Separate facts from action items
+
+For task extraction:
+- Begin each task with an action verb
+- Include deadlines if mentioned
+- Assign responsibilities if specified
+- Prioritize tasks if priority is indicated
+- Include any relevant context with each task
+- Format as an actionable to-do list
+- Add due dates in [brackets] if mentioned
+
+Always maintain accuracy and context while making the content more structured and actionable.""",
         model="gpt-4-1106-preview"
     )
     return assistant
@@ -92,22 +114,39 @@ def process_text():
         # Create a thread
         thread = client.beta.threads.create()
         
-        # Add the message to the thread
+        # Add the message to the thread with specific instructions
+        instructions = {
+            'summary': """Create a concise but comprehensive summary focusing on:
+                - Key business decisions and outcomes
+                - Important numbers and metrics
+                - Action items and next steps
+                - Deadlines and timelines
+                Format the summary in clear paragraphs.""",
+            'bullets': """Convert this text into clear, organized bullet points:
+                - Group related points together
+                - Start with key decisions
+                - Follow with supporting details
+                - End with next steps
+                Use consistent bullet formatting.""",
+            'tasks': """Extract and list all actionable items:
+                - Start each task with an action verb
+                - Include [deadlines] in brackets
+                - Note responsible parties in (parentheses)
+                - Prioritize tasks if indicated
+                Format as a clear to-do list."""
+        }.get(process_type)
+        
         message = client.beta.threads.messages.create(
             thread_id=thread.id,
             role="user",
-            content=f"Process this text as {process_type}: {text}"
+            content=f"Process this text as {process_type} with these instructions: {instructions}\n\nText: {text}"
         )
         
         # Run the assistant
         run = client.beta.threads.runs.create(
             thread_id=thread.id,
             assistant_id=assistant.id,
-            instructions={
-                'summary': "Create a concise summary of the key points.",
-                'bullets': "Convert this text into clear, organized bullet points.",
-                'tasks': "Extract and list all actionable items and tasks."
-            }.get(process_type)
+            instructions=instructions
         )
         
         # Wait for completion
