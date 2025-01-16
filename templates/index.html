@@ -25,35 +25,16 @@
                     <span>Stop</span>
                 </button>
             </div>
-
             <div id="audioPreview" class="audio-preview" style="display: none;">
                 <audio id="audioPlayer" controls></audio>
                 <div class="preview-message" style="display: none;">
                     Preview not available on this device
                 </div>
-                
-                <!-- Processing Options -->
-                <div class="processing-options">
-                    <button id="summarizeButton" class="btn btn-process">
-                        <i class="fas fa-compress-alt"></i>
-                        <span>Summarize</span>
-                    </button>
-                    <button id="bulletButton" class="btn btn-process">
-                        <i class="fas fa-list"></i>
-                        <span>Bullet Points</span>
-                    </button>
-                    <button id="tasksButton" class="btn btn-process">
-                        <i class="fas fa-tasks"></i>
-                        <span>Extract Tasks</span>
-                    </button>
-                    <button id="transcribeButton" class="btn btn-process">
+                <div class="preview-controls">
+                    <button id="transcribeButton" class="btn btn-primary" type="button">
                         <i class="fas fa-file-alt"></i>
                         <span>Transcribe</span>
                     </button>
-                </div>
-
-                <!-- Record Again Button -->
-                <div class="record-again">
                     <button id="recordAgainButton" class="btn btn-secondary">
                         <i class="fas fa-redo"></i>
                         <span>Record Again</span>
@@ -61,10 +42,47 @@
                 </div>
             </div>
             
-            <!-- Single Output Area -->
-            <div id="outputArea" class="output-area" style="display: none;">
+            <div id="textProcessing" class="text-processing" style="display: none;">
                 <div class="text-area-container">
-                    <textarea id="outputText" class="text-content" placeholder="Processed text will appear here..." readonly></textarea>
+                    <textarea id="transcriptionText" class="text-content" placeholder="Your transcription will appear here..." readonly></textarea>
+                </div>
+                
+                <div class="processing-controls">
+                    <div class="processing-options">
+                        <select id="summaryStyle" class="style-select" style="display: none;">
+                            <option value="concise">Concise</option>
+                            <option value="detailed">Detailed</option>
+                            <option value="executive">Executive Summary</option>
+                        </select>
+                        <select id="bulletStyle" class="style-select" style="display: none;">
+                            <option value="hierarchical">Hierarchical</option>
+                            <option value="flat">Flat List</option>
+                            <option value="categorized">Categorized</option>
+                        </select>
+                        <select id="taskStyle" class="style-select" style="display: none;">
+                            <option value="priority">By Priority</option>
+                            <option value="deadline">By Deadline</option>
+                            <option value="category">By Category</option>
+                        </select>
+                    </div>
+                    <div class="button-group">
+                        <button id="summarizeButton" class="btn btn-process">
+                            <i class="fas fa-compress-alt"></i>
+                            <span>Summarize</span>
+                        </button>
+                        <button id="bulletButton" class="btn btn-process">
+                            <i class="fas fa-list"></i>
+                            <span>Bullet Points</span>
+                        </button>
+                        <button id="tasksButton" class="btn btn-process">
+                            <i class="fas fa-tasks"></i>
+                            <span>Extract Tasks</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="text-area-container">
+                    <textarea id="processedText" class="text-content" placeholder="Processed text will appear here..."></textarea>
                 </div>
                 
                 <div class="final-controls">
@@ -79,9 +97,15 @@
                 </div>
             </div>
             
-            <div id="status" class="status-message"></div>
+            <div id="status"></div>
         </div>
     </div>
+    <script>
+        console.log('Initial script test');
+        window.addEventListener('load', function() {
+            console.log('Window loaded');
+        });
+    </script>
     <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
 </body>
 </html>

@@ -58,58 +58,23 @@ function initializeApp() {
         stopButton.addEventListener('click', stopRecording);
     }
     if (recordAgainButton) recordAgainButton.addEventListener('click', resetRecording);
-    if (summarizeButton) summarizeButton.addEventListener('click', () => processAudio('summary'));
-    if (bulletButton) bulletButton.addEventListener('click', () => processAudio('bullets'));
-    if (tasksButton) tasksButton.addEventListener('click', () => processAudio('tasks'));
-    if (sendButton) sendButton.addEventListener('click', async () => {
-        if (!emailInput.value) {
-            updateStatus('Please enter your email address.');
-            emailInput.focus();
-            return;
-        }
-
-        const textToSend = outputText.value;
-        if (!textToSend) {
-            updateStatus('No content to send.');
-            return;
-        }
-
-        updateStatus('Sending email...');
-        setLoading(true);
-
-        try {
-            const response = await fetch('/send-email', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    email: emailInput.value,
-                    content: textToSend
-                })
-            });
-
-            const data = await response.json();
-            if (data.success) {
-                updateStatus('Email sent successfully!');
-            } else {
-                throw new Error(data.message || 'Failed to send email');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            updateStatus('Error sending email. Please try again.');
-        } finally {
-            setLoading(false);
-        }
+    if (summarizeButton) summarizeButton.addEventListener('click', () => {
+        hideAllStyleSelects();
+        summaryStyle.style.display = 'block';
+        processText('summary', summaryStyle.value);
     });
-    if (startOverButton) startOverButton.addEventListener('click', () => {
-        audioPreview.style.display = 'none';
-        outputArea.style.display = 'none';
-        audioPlayer.src = '';
-        outputText.value = '';
-        emailInput.value = '';
-        updateStatus('');
+    if (bulletButton) bulletButton.addEventListener('click', () => {
+        hideAllStyleSelects();
+        bulletStyle.style.display = 'block';
+        processText('bullets', bulletStyle.value);
     });
+    if (tasksButton) tasksButton.addEventListener('click', () => {
+        hideAllStyleSelects();
+        taskStyle.style.display = 'block';
+        processText('tasks', taskStyle.value);
+    });
+    if (sendButton) sendButton.addEventListener('click', sendEmail);
+    if (startOverButton) startOverButton.addEventListener('click', startOver);
 
     // Initialize button states
     document.addEventListener('DOMContentLoaded', () => {
@@ -240,6 +205,13 @@ function initializeApp() {
         updateButtonStates(false);
         transcribeButton.disabled = true;
         updateStatus('');
+    }
+
+    function startOver() {
+        resetRecording();
+        transcriptionText.value = '';
+        processedText.value = '';
+        emailInput.value = '';
     }
 
     async function transcribeAudio() {
@@ -384,102 +356,46 @@ function initializeApp() {
         }
     }
 
-    async function processAudio(type) {
-        if (!audioBlob) {
-            updateStatus('No recording available to process.');
+    async function sendEmail() {
+        const email = emailInput.value;
+        const content = processedText.value || transcriptionText.value;
+
+        if (!email) {
+            updateStatus('Please enter an email address.');
             return;
         }
 
-        const loadingMessages = {
-            transcribe: [
-                "Converting speech to text...",
-                "Processing audio...",
-                "Almost there...",
-                "Finalizing transcription..."
-            ],
-            summary: [
-                "Analyzing content...",
-                "Identifying key points...",
-                "Crafting concise summary...",
-                "Finalizing your summary..."
-            ],
-            bullets: [
-                "Analyzing content...",
-                "Organizing information...",
-                "Creating bullet points...",
-                "Structuring your points..."
-            ],
-            tasks: [
-                "Analyzing content...",
-                "Identifying action items...",
-                "Extracting tasks...",
-                "Organizing your task list..."
-            ]
-        };
+        if (!content) {
+            updateStatus('No content to send.');
+            return;
+        }
 
-        const messages = loadingMessages[type] || loadingMessages.transcribe;
-        let messageIndex = 0;
-
-        updateStatus(`Processing audio as ${type}...`);
-        setLoading(true, messages[0]);
-
-        const messageInterval = setInterval(() => {
-            messageIndex = (messageIndex + 1) % messages.length;
-            setLoadingText(messages[messageIndex]);
-        }, 2000);
+        updateStatus('Sending email...');
+        setLoading(true);
 
         try {
-            // First, transcribe the audio
-            const formData = new FormData();
-            formData.append('audio', audioBlob);
-            formData.append('email', emailInput.value);
-
-            const response = await fetch('/process-audio', {
+            const response = await fetch('/send-email', {
                 method: 'POST',
-                body: formData
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: email,
+                    content: content
+                })
             });
 
-            if (!response.ok) throw new Error('Processing failed');
             const data = await response.json();
-
-            if (!data.success) {
-                throw new Error(data.message || 'Processing failed');
-            }
-
-            // If type is transcribe, show the transcription
-            if (type === 'transcribe') {
-                outputText.value = data.transcription;
-                outputArea.style.display = 'block';
-                updateStatus('Audio transcribed successfully!');
+            
+            if (data.success) {
+                updateStatus('Email sent successfully!');
             } else {
-                // Otherwise, process the transcription
-                const processResponse = await fetch('/process-text', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        text: data.transcription,
-                        type: type
-                    })
-                });
-
-                if (!processResponse.ok) throw new Error('Processing failed');
-                const processData = await processResponse.json();
-
-                if (!processData.success) {
-                    throw new Error(processData.message || 'Processing failed');
-                }
-
-                outputText.value = processData.processed_text;
-                outputArea.style.display = 'block';
-                updateStatus('Processing completed successfully!');
+                updateStatus('Error sending email: ' + data.message);
             }
         } catch (error) {
             console.error('Error:', error);
-            updateStatus('Error processing audio. Please try again.');
+            updateStatus('Error sending email. Please try again.');
         } finally {
-            clearInterval(messageInterval);
             setLoading(false);
         }
     }
