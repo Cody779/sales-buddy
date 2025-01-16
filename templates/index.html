@@ -31,7 +31,7 @@
                     Preview not available on this device, but recording was successful.
                 </div>
                 <div class="preview-controls">
-                    <button id="transcribeButton" class="btn btn-primary">
+                    <button id="transcribeButton" class="btn btn-primary" onclick="console.log('Direct click test');">
                         <i class="fas fa-file-alt"></i>
                         <span>Transcribe</span>
                     </button>
@@ -81,6 +81,13 @@
             <div id="status"></div>
         </div>
     </div>
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <!-- Add immediate test script -->
+    <script>
+        console.log('Initial script test');
+        window.addEventListener('load', function() {
+            console.log('Window loaded');
+        });
+    </script>
+    <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
 </body>
 </html>
