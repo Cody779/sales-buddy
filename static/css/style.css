@@ -122,19 +122,56 @@ h1 {
 .audio-preview {
     margin: 1.5rem 0;
     text-align: center;
+    padding: 1rem;
+    background: var(--card-background);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
 }
 
 .audio-preview audio {
     width: 100%;
-    max-width: 300px;
+    max-width: 500px;
     margin-bottom: 1rem;
-    filter: invert(1);
+    border-radius: 8px;
+    background: var(--card-background);
+}
+
+/* Custom audio player styling */
+audio::-webkit-media-controls-panel {
+    background-color: var(--card-background);
+}
+
+audio::-webkit-media-controls-play-button {
+    background-color: var(--card-background);
+    border-radius: 50%;
+    transform: scale(1.5);
+    transition: all 0.2s;
+}
+
+audio::-webkit-media-controls-play-button:hover {
+    transform: scale(1.7);
+}
+
+audio::-webkit-media-controls-current-time-display,
+audio::-webkit-media-controls-time-remaining-display {
+    color: var(--text-color);
+}
+
+audio::-webkit-media-controls-timeline {
+    background-color: var(--border-color);
+    border-radius: 25px;
+    margin: 0 15px;
+}
+
+audio::-webkit-media-controls-volume-slider {
+    background-color: var(--border-color);
+    border-radius: 25px;
+    padding-left: 8px;
+    padding-right: 8px;
 }
 
 .preview-controls {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
+    margin-top: 1rem;
 }
 
 #status {

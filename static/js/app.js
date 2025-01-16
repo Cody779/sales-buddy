@@ -127,13 +127,6 @@ function initializeApp() {
                     audioPlayer.load(); // Force reload
                     audioPreview.style.display = 'block';
                     previewMessage.style.display = 'none';
-                    
-                    // Test audio playback
-                    const testPlay = await audioPlayer.play().catch(e => {
-                        console.log('Initial playback test failed:', e);
-                        audioPlayer.pause();
-                    });
-                    console.log('Audio playback test completed');
                 } catch (e) {
                     console.error('Error setting up audio preview:', e);
                     previewMessage.style.display = 'block';
