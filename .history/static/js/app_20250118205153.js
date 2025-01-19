@@ -127,39 +127,22 @@ function initializeApp() {
                     headerDiv.textContent = header;
                     processedContent.insertBefore(headerDiv, processedContent.firstChild);
 
-                    // Create button container
-                    const buttonContainer = document.createElement('div');
-                    buttonContainer.className = 'button-container';
-
-                    // Create email button container and button
-                    const emailContainer = document.createElement('div');
-                    emailContainer.className = 'email-container';
-                    const emailBtn = document.createElement('button');
-                    emailBtn.className = 'btn-process';
-                    emailBtn.innerHTML = `
-                        <i class="fas fa-paper-plane"></i>
-                        <span>Email ${header}</span>
-                    `;
-                    emailBtn.addEventListener('click', () => sendEmail(content));
-                    emailContainer.appendChild(emailBtn);
-
-                    // Create return button container and button
-                    const returnContainer = document.createElement('div');
-                    returnContainer.className = 'return-button-container';
-                    const returnBtn = document.createElement('button');
-                    returnBtn.className = 'return-button';
-                    returnBtn.innerHTML = `
-                        <i class="fas fa-undo"></i>
-                        <span>Return to transcript</span>
-                    `;
+                    // Add return to transcript link
+                    const linkDiv = document.createElement('div');
+                    linkDiv.className = 'transcript-link-container';
+                    linkDiv.innerHTML = `<span class="transcript-link">return to transcript</span> for new analysis`;
                     
-                    // Add click handler for return button
-                    returnBtn.addEventListener('click', () => {
+                    // Add click handler for transcript link
+                    const transcriptLink = linkDiv.querySelector('.transcript-link');
+                    transcriptLink.addEventListener('click', () => {
                         // Remove show-transcription class first to reset state
                         existingMessage.classList.remove('show-transcription');
                         
-                        // Remove button container
-                        buttonContainer.remove();
+                        // Remove any existing email containers
+                        const existingEmailContainer = existingMessage.querySelector('.email-container');
+                        if (existingEmailContainer) {
+                            existingEmailContainer.remove();
+                        }
 
                         // Remove existing actions div if present
                         const existingActionsDiv = existingMessage.querySelector('.message-actions');
@@ -170,25 +153,37 @@ function initializeApp() {
                         // Remove has-processed class to reset the message state
                         existingMessage.classList.remove('has-processed');
                         
-                        // Show the processing prompt first
+                        // Create and add new processing buttons with fresh event listeners
+                        const newActionsDiv = createProcessingButtons();
+                        existingMessage.appendChild(newActionsDiv);
+
+                        // Show the processing prompt
                         const promptDiv = document.createElement('div');
                         promptDiv.className = 'processing-prompt';
                         promptDiv.innerHTML = '<i class="fas fa-magic"></i>How would you like your transcript processed?';
                         existingMessage.appendChild(promptDiv);
-
-                        // Then create and add new processing buttons with fresh event listeners
-                        const newActionsDiv = createProcessingButtons();
-                        existingMessage.appendChild(newActionsDiv);
                     });
                     
-                    returnContainer.appendChild(returnBtn);
-                    
-                    // Add both containers to the button container
-                    buttonContainer.appendChild(emailContainer);
-                    buttonContainer.appendChild(returnContainer);
-                    
-                    // Add button container to the message
-                    existingMessage.appendChild(buttonContainer);
+                    processedContent.appendChild(linkDiv);
+
+                    // Create email button container
+                    const emailContainer = document.createElement('div');
+                    emailContainer.className = 'email-container';
+                    const emailBtn = document.createElement('button');
+                    emailBtn.className = 'btn-process';
+                    emailBtn.innerHTML = `
+                        <i class="fas fa-paper-plane"></i>
+                        <span>Email ${header}</span>
+                    `;
+                    emailBtn.addEventListener('click', () => sendEmail(content));
+                    emailContainer.appendChild(emailBtn);
+                    existingMessage.appendChild(emailContainer);
+
+                    // Hide processing buttons when showing processed content
+                    const actionsDiv = existingMessage.querySelector('.message-actions');
+                    if (actionsDiv) {
+                        actionsDiv.style.display = 'none';
+                    }
 
                     return existingMessage;
                 }
@@ -428,13 +423,7 @@ function initializeApp() {
     function updateStatus(message) {
         console.log('Status:', message);
         if (status) {
-            if (message) {
-                status.textContent = message;
-                status.style.display = 'block';
-            } else {
-                status.textContent = '';
-                status.style.display = 'none';
-            }
+            status.textContent = message;
         }
     }
 

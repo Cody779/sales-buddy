@@ -428,13 +428,7 @@ function initializeApp() {
     function updateStatus(message) {
         console.log('Status:', message);
         if (status) {
-            if (message) {
-                status.textContent = message;
-                status.style.display = 'block';
-            } else {
-                status.textContent = '';
-                status.style.display = 'none';
-            }
+            status.textContent = message;
         }
     }
 

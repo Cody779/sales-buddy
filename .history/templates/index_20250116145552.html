@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Buddy</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>Sales Buddy AI</h1>
+            <div class="email-input">
+                <input type="email" id="email" placeholder="Enter your email address..." required>
+            </div>
+            <div class="controls">
+                <button id="recordButton" class="btn">
+                    <i class="fas fa-microphone"></i>
+                    <span>Record</span>
+                </button>
+                <button id="stopButton" class="btn" disabled>
+                    <i class="fas fa-stop"></i>
+                    <span>Stop</span>
+                </button>
+            </div>
+            <div id="audioPreview" class="audio-preview" style="display: none;">
+                <audio id="audioPlayer" controls></audio>
+                <div class="preview-message" style="display: none;">
+                    Preview not available on this device
+                </div>
+                <div class="preview-controls">
+                    <button id="transcribeButton" class="btn btn-primary" type="button">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Transcribe</span>
+                    </button>
+                    <button id="recordAgainButton" class="btn btn-secondary">
+                        <i class="fas fa-redo"></i>
+                        <span>Record Again</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="textProcessing" class="text-processing" style="display: none;">
+                <div class="text-area-container">
+                    <textarea id="transcriptionText" class="text-content" placeholder="Your transcription will appear here..." readonly></textarea>
+                </div>
+                
+                <div class="processing-controls">
+                    <div class="processing-options">
+                        <select id="summaryStyle" class="style-select" style="display: none;">
+                            <option value="concise">Concise</option>
+                            <option value="detailed">Detailed</option>
+                            <option value="executive">Executive Summary</option>
+                        </select>
+                        <select id="bulletStyle" class="style-select" style="display: none;">
+                            <option value="hierarchical">Hierarchical</option>
+                            <option value="flat">Flat List</option>
+                            <option value="categorized">Categorized</option>
+                        </select>
+                        <select id="taskStyle" class="style-select" style="display: none;">
+                            <option value="priority">By Priority</option>
+                            <option value="deadline">By Deadline</option>
+                            <option value="category">By Category</option>
+                        </select>
+                    </div>
+                    <div class="button-group">
+                        <button id="summarizeButton" class="btn btn-process">
+                            <i class="fas fa-compress-alt"></i>
+                            <span>Summarize</span>
+                        </button>
+                        <button id="bulletButton" class="btn btn-process">
+                            <i class="fas fa-list"></i>
+                            <span>Bullet Points</span>
+                        </button>
+                        <button id="tasksButton" class="btn btn-process">
+                            <i class="fas fa-tasks"></i>
+                            <span>Extract Tasks</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="text-area-container">
+                    <textarea id="processedText" class="text-content" placeholder="Processed text will appear here..."></textarea>
+                </div>
+                
+                <div class="final-controls">
+                    <button id="sendButton" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i>
+                        <span>Send to Email</span>
+                    </button>
+                    <button id="startOverButton" class="btn btn-secondary">
+                        <i class="fas fa-redo"></i>
+                        <span>Start Over</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="status"></div>
+        </div>
+    </div>
+    <script>
+        console.log('Initial script test');
+        window.addEventListener('load', function() {
+            console.log('Window loaded');
+        });
+    </script>
+    <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+</body>
+</html>

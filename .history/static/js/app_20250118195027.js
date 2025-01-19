@@ -61,6 +61,12 @@ function initializeApp() {
                 icon: 'fa-tasks',
                 text: 'Extract Tasks',
                 action: () => processText('tasks')
+            },
+            {
+                id: 'emailTranscription',
+                icon: 'fa-paper-plane',
+                text: 'Email Transcription',
+                action: () => sendEmail(currentTranscription)
             }
         ];
         
@@ -75,22 +81,6 @@ function initializeApp() {
             btn.addEventListener('click', button.action);
             actionsDiv.appendChild(btn);
         });
-
-        // Add email button (will be updated dynamically)
-        const emailBtn = document.createElement('button');
-        emailBtn.id = 'emailButton';
-        emailBtn.className = 'btn-process';
-        emailBtn.innerHTML = `
-            <i class="fas fa-paper-plane"></i>
-            <span>Email Transcription</span>
-        `;
-        emailBtn.addEventListener('click', () => {
-            const messageDiv = chatBox.querySelector('.message.transcription');
-            const isShowingTranscription = messageDiv?.classList.contains('show-transcription');
-            const content = isShowingTranscription ? currentTranscription : currentProcessed;
-            sendEmail(content);
-        });
-        actionsDiv.appendChild(emailBtn);
         
         return actionsDiv;
     }
@@ -105,91 +95,10 @@ function initializeApp() {
         if (type === 'processed') {
             const existingMessage = chatBox.querySelector('.message.transcription');
             if (existingMessage) {
-                existingMessage.classList.add('has-processed');
-                // Remove the processing prompt if it exists
-                const existingPrompt = existingMessage.querySelector('.processing-prompt');
-                if (existingPrompt) {
-                    existingPrompt.remove();
-                }
-                
                 const processedContent = existingMessage.querySelector('.processed-content');
                 if (processedContent) {
-                    // Remove existing toggle button if present
-                    const existingToggle = existingMessage.querySelector('.view-toggle');
-                    if (existingToggle) {
-                        existingToggle.remove();
-                    }
-
-                    // Update content
                     processedContent.textContent = content;
-                    const headerDiv = document.createElement('div');
-                    headerDiv.className = 'content-header';
-                    headerDiv.textContent = header;
-                    processedContent.insertBefore(headerDiv, processedContent.firstChild);
-
-                    // Create button container
-                    const buttonContainer = document.createElement('div');
-                    buttonContainer.className = 'button-container';
-
-                    // Create email button container and button
-                    const emailContainer = document.createElement('div');
-                    emailContainer.className = 'email-container';
-                    const emailBtn = document.createElement('button');
-                    emailBtn.className = 'btn-process';
-                    emailBtn.innerHTML = `
-                        <i class="fas fa-paper-plane"></i>
-                        <span>Email ${header}</span>
-                    `;
-                    emailBtn.addEventListener('click', () => sendEmail(content));
-                    emailContainer.appendChild(emailBtn);
-
-                    // Create return button container and button
-                    const returnContainer = document.createElement('div');
-                    returnContainer.className = 'return-button-container';
-                    const returnBtn = document.createElement('button');
-                    returnBtn.className = 'return-button';
-                    returnBtn.innerHTML = `
-                        <i class="fas fa-undo"></i>
-                        <span>Return to transcript</span>
-                    `;
-                    
-                    // Add click handler for return button
-                    returnBtn.addEventListener('click', () => {
-                        // Remove show-transcription class first to reset state
-                        existingMessage.classList.remove('show-transcription');
-                        
-                        // Remove button container
-                        buttonContainer.remove();
-
-                        // Remove existing actions div if present
-                        const existingActionsDiv = existingMessage.querySelector('.message-actions');
-                        if (existingActionsDiv) {
-                            existingActionsDiv.remove();
-                        }
-
-                        // Remove has-processed class to reset the message state
-                        existingMessage.classList.remove('has-processed');
-                        
-                        // Show the processing prompt first
-                        const promptDiv = document.createElement('div');
-                        promptDiv.className = 'processing-prompt';
-                        promptDiv.innerHTML = '<i class="fas fa-magic"></i>How would you like your transcript processed?';
-                        existingMessage.appendChild(promptDiv);
-
-                        // Then create and add new processing buttons with fresh event listeners
-                        const newActionsDiv = createProcessingButtons();
-                        existingMessage.appendChild(newActionsDiv);
-                    });
-                    
-                    returnContainer.appendChild(returnBtn);
-                    
-                    // Add both containers to the button container
-                    buttonContainer.appendChild(emailContainer);
-                    buttonContainer.appendChild(returnContainer);
-                    
-                    // Add button container to the message
-                    existingMessage.appendChild(buttonContainer);
-
+                    processedContent.previousElementSibling.textContent = header;
                     return existingMessage;
                 }
             }
@@ -203,23 +112,34 @@ function initializeApp() {
             contentWrapper.className = 'message-content-wrapper';
 
             // Transcription content
+            const transcriptionHeader = document.createElement('div');
+            transcriptionHeader.className = 'content-header';
+            transcriptionHeader.textContent = 'Original Transcription';
+
             const transcriptionContent = document.createElement('div');
             transcriptionContent.className = 'transcription-content';
             transcriptionContent.textContent = content;
 
-            // Empty processed content (hidden initially)
+            const transcriptionDiv = document.createElement('div');
+            transcriptionDiv.appendChild(transcriptionHeader);
+            transcriptionDiv.appendChild(transcriptionContent);
+
+            // Processed content (empty initially)
+            const processedHeader = document.createElement('div');
+            processedHeader.className = 'content-header';
+            processedHeader.textContent = 'Processing Result';
+
             const processedContent = document.createElement('div');
             processedContent.className = 'processed-content';
+            processedContent.textContent = 'Select a processing option below...';
 
-            contentWrapper.appendChild(transcriptionContent);
-            contentWrapper.appendChild(processedContent);
+            const processedDiv = document.createElement('div');
+            processedDiv.appendChild(processedHeader);
+            processedDiv.appendChild(processedContent);
+
+            contentWrapper.appendChild(transcriptionDiv);
+            contentWrapper.appendChild(processedDiv);
             messageDiv.appendChild(contentWrapper);
-
-            // Add processing prompt
-            const promptDiv = document.createElement('div');
-            promptDiv.className = 'processing-prompt';
-            promptDiv.innerHTML = '<i class="fas fa-magic"></i>How would you like your transcript processed?';
-            messageDiv.appendChild(promptDiv);
 
             // Add processing buttons
             const actionsDiv = createProcessingButtons();
@@ -238,18 +158,6 @@ function initializeApp() {
 
     async function startRecording() {
         console.log('Starting recording...');
-
-        // Check if there's an existing transcription
-        const existingMessage = chatBox.querySelector('.message.transcription');
-        if (existingMessage) {
-            const confirmNew = confirm('This will replace your existing transcription. Do you want to continue?');
-            if (!confirmNew) {
-                return;
-            }
-            // Remove existing transcription if user confirms
-            existingMessage.remove();
-        }
-
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             mediaRecorder = new MediaRecorder(stream);
@@ -276,10 +184,6 @@ function initializeApp() {
             recordButton.disabled = true;
             stopButton.disabled = false;
             updateStatus('Recording...');
-            
-            // Reset current transcription and processed text
-            currentTranscription = '';
-            currentProcessed = '';
         } catch (error) {
             console.error('Error starting recording:', error);
             updateStatus('Error starting recording: ' + error.message);
@@ -428,13 +332,7 @@ function initializeApp() {
     function updateStatus(message) {
         console.log('Status:', message);
         if (status) {
-            if (message) {
-                status.textContent = message;
-                status.style.display = 'block';
-            } else {
-                status.textContent = '';
-                status.style.display = 'none';
-            }
+            status.textContent = message;
         }
     }
 

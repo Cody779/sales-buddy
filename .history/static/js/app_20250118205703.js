@@ -127,11 +127,7 @@ function initializeApp() {
                     headerDiv.textContent = header;
                     processedContent.insertBefore(headerDiv, processedContent.firstChild);
 
-                    // Create button container
-                    const buttonContainer = document.createElement('div');
-                    buttonContainer.className = 'button-container';
-
-                    // Create email button container and button
+                    // Create email button container
                     const emailContainer = document.createElement('div');
                     emailContainer.className = 'email-container';
                     const emailBtn = document.createElement('button');
@@ -142,8 +138,9 @@ function initializeApp() {
                     `;
                     emailBtn.addEventListener('click', () => sendEmail(content));
                     emailContainer.appendChild(emailBtn);
+                    existingMessage.appendChild(emailContainer);
 
-                    // Create return button container and button
+                    // Create return button container
                     const returnContainer = document.createElement('div');
                     returnContainer.className = 'return-button-container';
                     const returnBtn = document.createElement('button');
@@ -158,8 +155,14 @@ function initializeApp() {
                         // Remove show-transcription class first to reset state
                         existingMessage.classList.remove('show-transcription');
                         
-                        // Remove button container
-                        buttonContainer.remove();
+                        // Remove any existing email containers
+                        const existingEmailContainer = existingMessage.querySelector('.email-container');
+                        if (existingEmailContainer) {
+                            existingEmailContainer.remove();
+                        }
+
+                        // Remove return button container
+                        returnContainer.remove();
 
                         // Remove existing actions div if present
                         const existingActionsDiv = existingMessage.querySelector('.message-actions');
@@ -182,13 +185,7 @@ function initializeApp() {
                     });
                     
                     returnContainer.appendChild(returnBtn);
-                    
-                    // Add both containers to the button container
-                    buttonContainer.appendChild(emailContainer);
-                    buttonContainer.appendChild(returnContainer);
-                    
-                    // Add button container to the message
-                    existingMessage.appendChild(buttonContainer);
+                    existingMessage.appendChild(returnContainer);
 
                     return existingMessage;
                 }
@@ -428,13 +425,7 @@ function initializeApp() {
     function updateStatus(message) {
         console.log('Status:', message);
         if (status) {
-            if (message) {
-                status.textContent = message;
-                status.style.display = 'block';
-            } else {
-                status.textContent = '';
-                status.style.display = 'none';
-            }
+            status.textContent = message;
         }
     }
 

@@ -23,12 +23,7 @@
             <!-- Chat Container -->
             <div class="chat-container">
                 <div id="chatBox" class="chat-box">
-                    <!-- Initial placeholder message -->
-                    <div id="placeholderMessage" class="message placeholder">
-                        <div class="message-content">
-                            Your recorded transcription will appear here
-                        </div>
-                    </div>
+                    <!-- Messages will be added here dynamically -->
                 </div>
 
                 <!-- Recording Controls -->
@@ -46,6 +41,40 @@
                 <!-- Audio Preview (Hidden initially) -->
                 <div id="audioPreview" class="audio-preview" style="display: none;">
                     <audio id="audioPlayer" controls></audio>
+                </div>
+
+                <!-- Processing Controls (Hidden initially) -->
+                <div id="processingControls" class="processing-controls" style="display: none;">
+                    <div class="button-group">
+                        <button id="summarizeButton" class="btn btn-process">
+                            <i class="fas fa-compress-alt"></i>
+                            <span>Summarize</span>
+                        </button>
+                        <button id="bulletButton" class="btn btn-process">
+                            <i class="fas fa-list"></i>
+                            <span>Bullet Points</span>
+                        </button>
+                        <button id="tasksButton" class="btn btn-process">
+                            <i class="fas fa-tasks"></i>
+                            <span>Extract Tasks</span>
+                        </button>
+                        <button id="emailTranscription" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i>
+                            <span>Email Transcription</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Navigation Controls (Hidden initially) -->
+                <div id="navigationControls" class="navigation-controls" style="display: none;">
+                    <button id="viewTranscription" class="btn btn-nav">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>View Transcription</span>
+                    </button>
+                    <button id="viewProcessed" class="btn btn-nav">
+                        <span>View Processed</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
                 </div>
             </div>
         </main>

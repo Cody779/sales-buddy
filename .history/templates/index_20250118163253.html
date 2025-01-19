@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Buddy</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>Sales Buddy AI</h1>
+            
+            <!-- Email Input -->
+            <div class="email-input">
+                <input type="email" id="email" placeholder="Enter your email address..." required>
+            </div>
+
+            <!-- Recording Controls -->
+            <div class="controls">
+                <button id="recordButton" class="btn">
+                    <i class="fas fa-microphone"></i>
+                    <span>Record</span>
+                </button>
+                <button id="stopButton" class="btn" disabled>
+                    <i class="fas fa-stop"></i>
+                    <span>Stop</span>
+                </button>
+            </div>
+
+            <!-- Audio Preview (Hidden initially) -->
+            <div id="audioPreview" class="audio-preview" style="display: none;">
+                <audio id="audioPlayer" controls></audio>
+            </div>
+
+            <!-- Content Area (Hidden initially) -->
+            <div id="contentArea" class="content-area" style="display: none;">
+                <!-- Left Column: Transcription -->
+                <div class="transcription-column">
+                    <div class="text-area-container">
+                        <textarea id="transcriptionText" class="text-content" placeholder="Your transcription will appear here..." readonly></textarea>
+                        <button id="emailTranscription" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i>
+                            <span>Email Transcription</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right Column: Processing -->
+                <div class="processing-column">
+                    <!-- Processing Controls -->
+                    <div class="processing-controls">
+                        <div class="button-group">
+                            <button id="summarizeButton" class="btn btn-process">
+                                <i class="fas fa-compress-alt"></i>
+                                <span>Summarize</span>
+                            </button>
+                            <button id="bulletButton" class="btn btn-process">
+                                <i class="fas fa-list"></i>
+                                <span>Bullet Points</span>
+                            </button>
+                            <button id="tasksButton" class="btn btn-process">
+                                <i class="fas fa-tasks"></i>
+                                <span>Extract Tasks</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Processed Text Area -->
+                    <div class="text-area-container">
+                        <textarea id="processedText" class="text-content" placeholder="Processed text will appear here..."></textarea>
+                        <button id="emailProcessed" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i>
+                            <span>Email Processed Text</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Message -->
+            <div id="status" class="status-message"></div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+</body>
+</html>
