@@ -252,11 +252,16 @@ async function startRecording() {
     // Check if there's an existing transcription
     const existingMessage = chatBox.querySelector('.message.transcription');
     if (existingMessage) {
-        const confirmNew = confirm('This will replace your existing transcription. Do you want to continue?');
+        // Force dialog to appear on mobile by using window.confirm
+        const confirmNew = window.confirm('This will replace your existing transcription. Do you want to continue?');
         if (!confirmNew) {
+            console.log('User cancelled new recording');
             return;
         }
+        // Clean up old transcription
         existingMessage.remove();
+        currentTranscription = '';
+        currentProcessed = '';
     }
     
     // Remove any existing placeholder messages first
