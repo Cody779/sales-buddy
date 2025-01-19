@@ -271,28 +271,12 @@ async function startRecording() {
     chatBox.appendChild(placeholder);
 
     try {
-        // Updated audio constraints for better handling input levels and reducing distortion
+        // Simple audio constraints for maximum compatibility
         const stream = await navigator.mediaDevices.getUserMedia({
             audio: {
                 echoCancellation: true,
                 noiseSuppression: true,
-                autoGainControl: true,
-                channelCount: 1,
-                sampleRate: 44100,
-                volume: 0.75,
-                latency: 0,
-                noiseSuppression: {
-                    ideal: true,
-                    exact: true
-                },
-                autoGainControl: {
-                    ideal: true,
-                    exact: true
-                },
-                echoCancellation: {
-                    ideal: true,
-                    exact: true
-                }
+                autoGainControl: true
             }
         });
 
@@ -310,8 +294,7 @@ async function startRecording() {
             : 'audio/mp4';
 
         mediaRecorder = new MediaRecorder(stream, {
-            mimeType: mimeType,
-            audioBitsPerSecond: 128000
+            mimeType: mimeType
         });
         
         audioChunks = [];

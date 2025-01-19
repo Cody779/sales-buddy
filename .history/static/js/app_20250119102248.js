@@ -271,28 +271,12 @@ async function startRecording() {
     chatBox.appendChild(placeholder);
 
     try {
-        // Updated audio constraints for better handling input levels and reducing distortion
+        // Simple audio constraints for maximum compatibility
         const stream = await navigator.mediaDevices.getUserMedia({
             audio: {
                 echoCancellation: true,
                 noiseSuppression: true,
-                autoGainControl: true,
-                channelCount: 1,
-                sampleRate: 44100,
-                volume: 0.75,
-                latency: 0,
-                noiseSuppression: {
-                    ideal: true,
-                    exact: true
-                },
-                autoGainControl: {
-                    ideal: true,
-                    exact: true
-                },
-                echoCancellation: {
-                    ideal: true,
-                    exact: true
-                }
+                autoGainControl: true
             }
         });
 
@@ -310,8 +294,7 @@ async function startRecording() {
             : 'audio/mp4';
 
         mediaRecorder = new MediaRecorder(stream, {
-            mimeType: mimeType,
-            audioBitsPerSecond: 128000
+            mimeType: mimeType
         });
         
         audioChunks = [];
@@ -345,16 +328,12 @@ async function startRecording() {
             if (!analyser || !isRecording) return;
             analyser.getByteFrequencyData(dataArray);
             
-            // Increase sensitivity and make middle bar most prominent
-            const weights = [1.5, 2.0, 2.5, 2.0, 1.5];
+            const weights = [1.2, 1.5, 2.0, 1.5, 1.2];
             for (let i = 0; i < 5; i++) {
                 const sum = dataArray.reduce((acc, val) => acc + val, 0);
                 const average = (sum / dataArray.length) * weights[i];
-                // Increase base height and maximum amplitude
-                const height = Math.max(5, (average / 255) * 300);
+                const height = Math.max(3, (average / 255) * 100);
                 waveBars[i].style.height = `${height}%`;
-                // Add smooth transition
-                waveBars[i].style.transition = 'height 0.05s ease';
             }
             
             if (isRecording) {

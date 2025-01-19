@@ -271,49 +271,39 @@ async function startRecording() {
     chatBox.appendChild(placeholder);
 
     try {
-        // Updated audio constraints for better handling input levels and reducing distortion
+        // Specific constraints for better mobile compatibility
         const stream = await navigator.mediaDevices.getUserMedia({
             audio: {
                 echoCancellation: true,
                 noiseSuppression: true,
                 autoGainControl: true,
-                channelCount: 1,
                 sampleRate: 44100,
-                volume: 0.75,
-                latency: 0,
-                noiseSuppression: {
-                    ideal: true,
-                    exact: true
-                },
-                autoGainControl: {
-                    ideal: true,
-                    exact: true
-                },
-                echoCancellation: {
-                    ideal: true,
-                    exact: true
-                }
+                channelCount: 1
             }
         });
-
-        // Set up audio context and analyzer
+        
+        // Set up audio analysis with mobile-safe context
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const source = audioContext.createMediaStreamSource(stream);
         analyser = audioContext.createAnalyser();
-        analyser.fftSize = 256;
+        analyser.fftSize = 32;
         source.connect(analyser);
         dataArray = new Uint8Array(analyser.frequencyBinCount);
-
-        // Use a widely supported audio format
-        const mimeType = MediaRecorder.isTypeSupported('audio/webm') 
-            ? 'audio/webm' 
-            : 'audio/mp4';
+        
+        // Configure MediaRecorder with reliable options for mobile
+        let mimeType = 'audio/webm';
+        if (MediaRecorder.isTypeSupported('audio/webm')) {
+            mimeType = 'audio/webm';
+        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+            mimeType = 'audio/mp4';
+        } else if (MediaRecorder.isTypeSupported('audio/ogg')) {
+            mimeType = 'audio/ogg';
+        }
 
         mediaRecorder = new MediaRecorder(stream, {
             mimeType: mimeType,
             audioBitsPerSecond: 128000
         });
-        
         audioChunks = [];
         
         // Reset and start recording timer
@@ -341,38 +331,47 @@ async function startRecording() {
         const durationDisplay = audioPreview.querySelector('.current-time');
         const waveBars = audioPreview.querySelectorAll('.wave-bar');
         
+        let isAnimating = false;
+
         function updateWaveform() {
-            if (!analyser || !isRecording) return;
+            if (!analyser || !dataArray) return;
+            
             analyser.getByteFrequencyData(dataArray);
             
-            // Increase sensitivity and make middle bar most prominent
-            const weights = [1.5, 2.0, 2.5, 2.0, 1.5];
-            for (let i = 0; i < 5; i++) {
-                const sum = dataArray.reduce((acc, val) => acc + val, 0);
-                const average = (sum / dataArray.length) * weights[i];
-                // Increase base height and maximum amplitude
-                const height = Math.max(5, (average / 255) * 300);
+            // Use 5 frequency bands for the 5 bars
+            for (let i = 0; i < waveBars.length; i++) {
+                const value = dataArray[i * 2];
+                const height = Math.max(3, (value / 255) * 45);
                 waveBars[i].style.height = `${height}%`;
-                // Add smooth transition
-                waveBars[i].style.transition = 'height 0.05s ease';
             }
             
-            if (isRecording) {
+            if (isRecording && !isAnimating) {
+                isAnimating = true;
                 animationFrame = requestAnimationFrame(updateWaveform);
             }
         }
 
-        // Start the animation
-        isRecording = true;
-        updateWaveform();
+        // Start the waveform animation
+        function startWaveform() {
+            isAnimating = false;
+            updateWaveform();
+        }
+
+        startWaveform();
 
         recordingTimer = setInterval(() => {
             recordingDuration = (Date.now() - recordingStartTime) / 1000;
             const minutes = Math.floor(recordingDuration / 60);
             const seconds = Math.floor(recordingDuration % 60);
             durationDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Ensure wave animation is running
+            if (isRecording && !isAnimating) {
+                startWaveform();
+            }
         }, 100);
 
+        // Collect audio data more frequently on mobile
         mediaRecorder.addEventListener('dataavailable', event => {
             if (event.data.size > 0) {
                 audioChunks.push(event.data);
@@ -381,15 +380,87 @@ async function startRecording() {
 
         mediaRecorder.addEventListener('stop', async () => {
             console.log('Recording stopped, processing audio...');
-            isRecording = false;
             clearInterval(recordingTimer);
             if (animationFrame) {
                 cancelAnimationFrame(animationFrame);
             }
+            if (audioContext) {
+                audioContext.close();
+            }
             
             if (audioChunks.length > 0) {
                 audioBlob = new Blob(audioChunks, { type: mimeType });
-                await setupAudioPlayer();
+                const audioUrl = URL.createObjectURL(audioBlob);
+                
+                try {
+                    // Create custom player with known duration
+                    const minutes = Math.floor(recordingDuration / 60);
+                    const seconds = Math.floor(recordingDuration % 60);
+                    const formattedDuration = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                    
+                    const customPlayer = document.createElement('div');
+                    customPlayer.className = 'custom-audio-player';
+                    customPlayer.innerHTML = `
+                        <div class="audio-controls">
+                            <button class="play-button">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <div class="time-display">
+                                <span class="current-time">0:00</span>
+                                <span>/</span>
+                                <span class="duration">${formattedDuration}</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress"></div>
+                            </div>
+                        </div>
+                        <audio style="display: none;"></audio>
+                    `;
+                    
+                    audioPreview.innerHTML = '';
+                    audioPreview.appendChild(customPlayer);
+                    
+                    const audioElement = customPlayer.querySelector('audio');
+                    const playButton = customPlayer.querySelector('.play-button');
+                    const currentTimeDisplay = customPlayer.querySelector('.current-time');
+                    const progressBar = customPlayer.querySelector('.progress-bar');
+                    const progress = customPlayer.querySelector('.progress');
+                    
+                    audioElement.src = audioUrl;
+                    
+                    playButton.addEventListener('click', () => {
+                        if (audioElement.paused) {
+                            audioElement.play();
+                            playButton.innerHTML = '<i class="fas fa-pause"></i>';
+                        } else {
+                            audioElement.pause();
+                            playButton.innerHTML = '<i class="fas fa-play"></i>';
+                        }
+                    });
+                    
+                    audioElement.addEventListener('timeupdate', () => {
+                        const currentTime = audioElement.currentTime;
+                        const minutes = Math.floor(currentTime / 60);
+                        const seconds = Math.floor(currentTime % 60);
+                        currentTimeDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                        
+                        const progressPercent = (currentTime / recordingDuration) * 100;
+                        progress.style.width = `${progressPercent}%`;
+                    });
+                    
+                    progressBar.addEventListener('click', (e) => {
+                        const rect = progressBar.getBoundingClientRect();
+                        const percent = (e.clientX - rect.left) / rect.width;
+                        audioElement.currentTime = percent * recordingDuration;
+                    });
+
+                    console.log('Audio player setup complete');
+                } catch (error) {
+                    console.error('Error setting up audio player:', error);
+                    updateStatus('Error setting up audio player: ' + error.message);
+                }
+                
+                // Auto-transcribe after recording
                 await transcribeAudio();
             } else {
                 console.error('No audio data collected');
@@ -397,8 +468,9 @@ async function startRecording() {
             }
         });
 
-        // Start recording
+        // Start recording with smaller timeslices for more frequent data collection
         mediaRecorder.start(100);
+        isRecording = true;
         recordButton.classList.add('recording');
         recordButton.disabled = true;
         stopButton.disabled = false;
@@ -410,73 +482,7 @@ async function startRecording() {
     } catch (error) {
         console.error('Error starting recording:', error);
         updateStatus('Error starting recording: ' + error.message);
-        isRecording = false;
-        if (recordingTimer) clearInterval(recordingTimer);
-        if (animationFrame) cancelAnimationFrame(animationFrame);
     }
-}
-
-async function setupAudioPlayer() {
-    const audioUrl = URL.createObjectURL(audioBlob);
-    const minutes = Math.floor(recordingDuration / 60);
-    const seconds = Math.floor(recordingDuration % 60);
-    const formattedDuration = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    
-    const customPlayer = document.createElement('div');
-    customPlayer.className = 'custom-audio-player';
-    customPlayer.innerHTML = `
-        <div class="audio-controls">
-            <button class="play-button">
-                <i class="fas fa-play"></i>
-            </button>
-            <div class="time-display">
-                <span class="current-time">0:00</span>
-                <span>/</span>
-                <span class="duration">${formattedDuration}</span>
-            </div>
-            <div class="progress-bar">
-                <div class="progress"></div>
-            </div>
-        </div>
-        <audio style="display: none;"></audio>
-    `;
-    
-    audioPreview.innerHTML = '';
-    audioPreview.appendChild(customPlayer);
-    
-    const audioElement = customPlayer.querySelector('audio');
-    const playButton = customPlayer.querySelector('.play-button');
-    const currentTimeDisplay = customPlayer.querySelector('.current-time');
-    const progressBar = customPlayer.querySelector('.progress-bar');
-    const progress = customPlayer.querySelector('.progress');
-    
-    audioElement.src = audioUrl;
-    
-    playButton.addEventListener('click', () => {
-        if (audioElement.paused) {
-            audioElement.play();
-            playButton.innerHTML = '<i class="fas fa-pause"></i>';
-        } else {
-            audioElement.pause();
-            playButton.innerHTML = '<i class="fas fa-play"></i>';
-        }
-    });
-    
-    audioElement.addEventListener('timeupdate', () => {
-        const currentTime = audioElement.currentTime;
-        const minutes = Math.floor(currentTime / 60);
-        const seconds = Math.floor(currentTime % 60);
-        currentTimeDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-        
-        const progressPercent = (currentTime / recordingDuration) * 100;
-        progress.style.width = `${progressPercent}%`;
-    });
-    
-    progressBar.addEventListener('click', (e) => {
-        const rect = progressBar.getBoundingClientRect();
-        const percent = (e.clientX - rect.left) / rect.width;
-        audioElement.currentTime = percent * recordingDuration;
-    });
 }
 
 function stopRecording() {
