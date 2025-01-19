@@ -291,8 +291,17 @@ async function startRecording() {
         dataArray = new Uint8Array(analyser.frequencyBinCount);
         
         // Configure MediaRecorder with reliable options for mobile
+        let mimeType = 'audio/webm';
+        if (MediaRecorder.isTypeSupported('audio/webm')) {
+            mimeType = 'audio/webm';
+        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+            mimeType = 'audio/mp4';
+        } else if (MediaRecorder.isTypeSupported('audio/ogg')) {
+            mimeType = 'audio/ogg';
+        }
+
         mediaRecorder = new MediaRecorder(stream, {
-            mimeType: 'audio/webm;codecs=opus',
+            mimeType: mimeType,
             audioBitsPerSecond: 128000
         });
         audioChunks = [];
@@ -323,20 +332,18 @@ async function startRecording() {
         const waveBars = audioPreview.querySelectorAll('.wave-bar');
         
         function updateWaveform() {
-            if (!analyser || !dataArray) return;
+            if (!analyser || !dataArray || !isRecording) return;
             
             analyser.getByteFrequencyData(dataArray);
             
             // Use 5 frequency bands for the 5 bars
             for (let i = 0; i < waveBars.length; i++) {
                 const value = dataArray[i * 2];
-                const height = Math.max(3, (value / 255) * 150);
+                const height = Math.max(3, (value / 255) * 45); // Reduced max height to 45%
                 waveBars[i].style.height = `${height}%`;
             }
             
-            if (isRecording) {
-                animationFrame = requestAnimationFrame(updateWaveform);
-            }
+            animationFrame = requestAnimationFrame(updateWaveform);
         }
         
         updateWaveform();
@@ -364,7 +371,7 @@ async function startRecording() {
             }
             
             if (audioChunks.length > 0) {
-                audioBlob = new Blob(audioChunks, { type: 'audio/webm;codecs=opus' });
+                audioBlob = new Blob(audioChunks, { type: mimeType });
                 const audioUrl = URL.createObjectURL(audioBlob);
                 
                 try {
