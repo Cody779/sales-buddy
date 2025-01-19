@@ -4,19 +4,12 @@ console.log('app.js loaded');
 function initializeApp() {
     console.log('Initializing app');
     
-let mediaRecorder;
-let audioChunks = [];
+    let mediaRecorder;
+    let audioChunks = [];
     let audioBlob;
     let isRecording = false;
     let currentTranscription = '';
     let currentProcessed = '';
-    let recordingStartTime;
-    let recordingDuration = 0;
-    let recordingTimer;
-    let audioContext;
-    let analyser;
-    let dataArray;
-    let animationFrame;
 
     // DOM Elements
     const recordButton = document.getElementById('recordButton');
@@ -244,9 +237,9 @@ let audioChunks = [];
         chatBox.appendChild(messageDiv);
         messageDiv.scrollIntoView({ behavior: 'smooth' });
         return messageDiv;
-}
+    }
 
-async function startRecording() {
+    async function startRecording() {
         console.log('Starting recording...');
 
         // Check if there's an existing transcription
@@ -256,6 +249,7 @@ async function startRecording() {
             if (!confirmNew) {
                 return;
             }
+            // Remove existing transcription if user confirms
             existingMessage.remove();
         }
         
@@ -272,88 +266,40 @@ async function startRecording() {
 
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            
-            // Set up audio analysis
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const source = audioContext.createMediaStreamSource(stream);
-            analyser = audioContext.createAnalyser();
-            analyser.fftSize = 32;
-            source.connect(analyser);
-            dataArray = new Uint8Array(analyser.frequencyBinCount);
-            
             mediaRecorder = new MediaRecorder(stream);
             audioChunks = [];
             
-            // Reset and start recording timer
-            recordingStartTime = Date.now();
-            recordingDuration = 0;
-            
-            // Create or update recording duration display
-            audioPreview.innerHTML = `
-                <div class="custom-audio-player recording-duration">
-                    <div class="wave-container">
-                        <div class="wave-bar"></div>
-                        <div class="wave-bar"></div>
-                        <div class="wave-bar"></div>
-                        <div class="wave-bar"></div>
-                        <div class="wave-bar"></div>
-                    </div>
-                    <div class="time-display">
-                        <span class="current-time">0:00</span>
-                    </div>
-                </div>
-            `;
-            audioPreview.style.display = 'block';
-            
-            // Update duration display and wave animation
-            const durationDisplay = audioPreview.querySelector('.current-time');
-            const waveBars = audioPreview.querySelectorAll('.wave-bar');
-            
-            function updateWaveform() {
-                analyser.getByteFrequencyData(dataArray);
-                
-                // Use 5 frequency bands for the 5 bars
-                for (let i = 0; i < waveBars.length; i++) {
-                    const value = dataArray[i * 2];
-                    const height = Math.max(3, (value / 255) * 150);
-                    waveBars[i].style.height = `${height}%`;
-                }
-                
-                animationFrame = requestAnimationFrame(updateWaveform);
-            }
-            
-            updateWaveform();
-            
-            recordingTimer = setInterval(() => {
-                recordingDuration = (Date.now() - recordingStartTime) / 1000;
-                const minutes = Math.floor(recordingDuration / 60);
-                const seconds = Math.floor(recordingDuration % 60);
-                durationDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-            }, 100);
-
             mediaRecorder.addEventListener('dataavailable', event => {
                 audioChunks.push(event.data);
             });
 
             mediaRecorder.addEventListener('stop', async () => {
                 console.log('Recording stopped, processing audio...');
-                clearInterval(recordingTimer);
-                cancelAnimationFrame(animationFrame);
-                if (audioContext) {
-                    audioContext.close();
-                }
-                audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
                 const audioUrl = URL.createObjectURL(audioBlob);
                 
                 try {
-                    // Create custom player with known duration
-                    const minutes = Math.floor(recordingDuration / 60);
-                    const seconds = Math.floor(recordingDuration % 60);
-                    const formattedDuration = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                    // Get audio duration first
+                    const duration = await new Promise((resolve, reject) => {
+                        const temp = new Audio();
+                        temp.src = audioUrl;
+                        temp.addEventListener('loadedmetadata', () => {
+                            resolve(temp.duration);
+                        });
+                        temp.addEventListener('error', (e) => reject(e));
+                    });
                     
+                    // Format duration for display
+                    const minutes = Math.floor(duration / 60);
+                    const seconds = Math.floor(duration % 60);
+                    const formattedDuration = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                    console.log('Audio duration:', formattedDuration);
+                    
+                    // Create custom player with known duration
                     const customPlayer = document.createElement('div');
                     customPlayer.className = 'custom-audio-player';
                     customPlayer.innerHTML = `
+                        <audio id="audioElement" src="${audioUrl}"></audio>
                         <div class="audio-controls">
                             <button class="play-button">
                                 <i class="fas fa-play"></i>
@@ -367,11 +313,12 @@ async function startRecording() {
                                 <div class="progress"></div>
                             </div>
                         </div>
-                        <audio style="display: none;"></audio>
                     `;
                     
+                    // Replace the default audio player
                     audioPreview.innerHTML = '';
                     audioPreview.appendChild(customPlayer);
+                    audioPreview.style.display = 'block';
                     
                     const audioElement = customPlayer.querySelector('audio');
                     const playButton = customPlayer.querySelector('.play-button');
@@ -379,8 +326,7 @@ async function startRecording() {
                     const progressBar = customPlayer.querySelector('.progress-bar');
                     const progress = customPlayer.querySelector('.progress');
                     
-                    audioElement.src = audioUrl;
-                    
+                    // Add event listeners for the custom player
                     playButton.addEventListener('click', () => {
                         if (audioElement.paused) {
                             audioElement.play();
@@ -397,20 +343,18 @@ async function startRecording() {
                         const seconds = Math.floor(currentTime % 60);
                         currentTimeDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
                         
-                        const progressPercent = (currentTime / recordingDuration) * 100;
+                        const progressPercent = (currentTime / duration) * 100;
                         progress.style.width = `${progressPercent}%`;
                     });
                     
                     progressBar.addEventListener('click', (e) => {
                         const rect = progressBar.getBoundingClientRect();
                         const percent = (e.clientX - rect.left) / rect.width;
-                        audioElement.currentTime = percent * recordingDuration;
+                        audioElement.currentTime = percent * duration;
                     });
-
-                    console.log('Audio player setup complete');
-            } catch (error) {
+                } catch (error) {
                     console.error('Error setting up audio player:', error);
-                    updateStatus('Error setting up audio player: ' + error.message);
+                    updateStatus('Error setting up audio player');
                 }
                 
                 // Auto-transcribe after recording
@@ -427,22 +371,17 @@ async function startRecording() {
             // Reset current transcription and processed text
             currentTranscription = '';
             currentProcessed = '';
-    } catch (error) {
+        } catch (error) {
             console.error('Error starting recording:', error);
             updateStatus('Error starting recording: ' + error.message);
+        }
     }
-}
 
-function stopRecording() {
+    function stopRecording() {
         console.log('Stopping recording...');
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-            clearInterval(recordingTimer);
-            cancelAnimationFrame(animationFrame);
-            if (audioContext) {
-                audioContext.close();
-            }
-    mediaRecorder.stop();
-    mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            mediaRecorder.stop();
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
             isRecording = false;
             recordButton.classList.remove('recording');
             recordButton.disabled = false;
@@ -457,20 +396,7 @@ function stopRecording() {
             return;
         }
 
-        setLoading(true, 'Transcribing audio...');
-        const loadingMessages = [
-            "Converting speech to text...",
-            "Processing audio content...",
-            "Generating transcription...",
-            "Almost there..."
-        ];
-        let messageIndex = 0;
-        
-        // Start message rotation
-        const messageInterval = setInterval(() => {
-            messageIndex = (messageIndex + 1) % loadingMessages.length;
-            document.body.setAttribute('data-loading-text', loadingMessages[messageIndex]);
-        }, 2000);
+        updateStatus('Transcribing audio...');
         
         try {
             // Convert blob to base64
@@ -507,39 +433,36 @@ function stopRecording() {
         } catch (error) {
             console.error('Error transcribing audio:', error);
             updateStatus('Error transcribing audio: ' + error.message);
-        } finally {
-            clearInterval(messageInterval);
-            setLoading(false);
         }
     }
 
     async function processText(type) {
         if (!currentTranscription) {
             updateStatus('No text to process');
-        return;
-    }
-    
+            return;
+        }
+
         updateStatus(`Processing text as ${type}...`);
         setLoading(true, `Processing ${type}...`);
 
         try {
             const response = await fetch('/process-text', {
-                    method: 'POST',
-                    headers: {
+                method: 'POST',
+                headers: {
                     'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
+                },
+                body: JSON.stringify({
                     text: currentTranscription,
                     type: type
-                    })
-                });
-                
-                if (!response.ok) {
+                })
+            });
+
+            if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                if (data.success) {
+            }
+
+            const data = await response.json();
+            if (data.success) {
                 // Hide audio preview and recording controls
                 audioPreview.style.display = 'none';
                 document.querySelector('.recording-controls').style.display = 'none';
@@ -549,8 +472,8 @@ function stopRecording() {
                 updateStatus('Processing complete');
             } else {
                 throw new Error(data.message || 'Processing failed');
-                }
-            } catch (error) {
+            }
+        } catch (error) {
             console.error('Error processing text:', error);
             updateStatus('Error processing text: ' + error.message);
         } finally {
@@ -589,10 +512,10 @@ function stopRecording() {
             }
 
             updateStatus('Email sent successfully');
-    } catch (error) {
+        } catch (error) {
             console.error('Error sending email:', error);
             updateStatus('Error sending email: ' + error.message);
-    } finally {
+        } finally {
             setLoading(false);
         }
     }
@@ -603,37 +526,6 @@ function stopRecording() {
             if (message) {
                 status.textContent = message;
                 status.style.display = 'block';
-                
-                // Find the last visible element based on the current page state
-                let lastVisibleElement;
-                
-                // Check for audio preview (recording or playback state)
-                const audioPreview = document.getElementById('audioPreview');
-                if (audioPreview && audioPreview.style.display !== 'none') {
-                    lastVisibleElement = audioPreview;
-                } else {
-                    // Check for transcription message with processed content
-                    const transcriptionMsg = chatBox.querySelector('.message.transcription');
-                    if (transcriptionMsg) {
-                        if (transcriptionMsg.classList.contains('has-processed')) {
-                            // If showing processed content, find the button container
-                            const buttonContainer = transcriptionMsg.querySelector('.button-container');
-                            lastVisibleElement = buttonContainer || transcriptionMsg;
-                        } else {
-                            // If showing transcription, find the message actions
-                            const messageActions = transcriptionMsg.querySelector('.message-actions');
-                            lastVisibleElement = messageActions || transcriptionMsg;
-                        }
-                    }
-                }
-                
-                // Insert status message after the last visible element
-                if (lastVisibleElement) {
-                    lastVisibleElement.after(status);
-                } else {
-                    // Fallback to chat box if no specific element is found
-                    chatBox.appendChild(status);
-                }
             } else {
                 status.textContent = '';
                 status.style.display = 'none';

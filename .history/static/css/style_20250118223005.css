@@ -91,6 +91,10 @@ main {
     gap: 0.5rem;
     min-height: 150px;
     margin-bottom: 0.5rem;
+    background-color: var(--card-background);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
 }
 
 /* Message Styles */
@@ -347,7 +351,7 @@ main {
     width: 50%;
     max-width: 600px;
     padding: 0.75rem;
-    margin: 0.5rem auto 0;
+    margin: 1rem auto 0;
     background-color: var(--card-background);
     border: 1px solid var(--border-color);
     border-radius: 8px;
@@ -355,7 +359,7 @@ main {
     font-size: 0.9rem;
     text-align: center;
     box-sizing: border-box;
-    order: 999;
+    position: relative;
 }
 
 /* Show status message when it has content */

@@ -457,20 +457,7 @@ function stopRecording() {
             return;
         }
 
-        setLoading(true, 'Transcribing audio...');
-        const loadingMessages = [
-            "Converting speech to text...",
-            "Processing audio content...",
-            "Generating transcription...",
-            "Almost there..."
-        ];
-        let messageIndex = 0;
-        
-        // Start message rotation
-        const messageInterval = setInterval(() => {
-            messageIndex = (messageIndex + 1) % loadingMessages.length;
-            document.body.setAttribute('data-loading-text', loadingMessages[messageIndex]);
-        }, 2000);
+        updateStatus('Transcribing audio...');
         
         try {
             // Convert blob to base64
@@ -507,9 +494,6 @@ function stopRecording() {
         } catch (error) {
             console.error('Error transcribing audio:', error);
             updateStatus('Error transcribing audio: ' + error.message);
-        } finally {
-            clearInterval(messageInterval);
-            setLoading(false);
         }
     }
 
@@ -604,34 +588,11 @@ function stopRecording() {
                 status.textContent = message;
                 status.style.display = 'block';
                 
-                // Find the last visible element based on the current page state
-                let lastVisibleElement;
-                
-                // Check for audio preview (recording or playback state)
-                const audioPreview = document.getElementById('audioPreview');
-                if (audioPreview && audioPreview.style.display !== 'none') {
-                    lastVisibleElement = audioPreview;
-                } else {
-                    // Check for transcription message with processed content
-                    const transcriptionMsg = chatBox.querySelector('.message.transcription');
-                    if (transcriptionMsg) {
-                        if (transcriptionMsg.classList.contains('has-processed')) {
-                            // If showing processed content, find the button container
-                            const buttonContainer = transcriptionMsg.querySelector('.button-container');
-                            lastVisibleElement = buttonContainer || transcriptionMsg;
-                        } else {
-                            // If showing transcription, find the message actions
-                            const messageActions = transcriptionMsg.querySelector('.message-actions');
-                            lastVisibleElement = messageActions || transcriptionMsg;
-                        }
-                    }
-                }
-                
-                // Insert status message after the last visible element
-                if (lastVisibleElement) {
-                    lastVisibleElement.after(status);
-                } else {
-                    // Fallback to chat box if no specific element is found
+                // Move status message after the last element in the chat box
+                const lastElement = chatBox.lastElementChild;
+                if (lastElement && lastElement !== status) {
+                    lastElement.after(status);
+                } else if (!lastElement) {
                     chatBox.appendChild(status);
                 }
             } else {

@@ -70,7 +70,7 @@ h1 {
 main {
     flex: 1;
     overflow-y: auto;
-    padding: 1rem;
+    padding: 1.5rem;
     display: flex;
     flex-direction: column;
 }
@@ -81,21 +81,19 @@ main {
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    position: relative;
+    gap: 0.75rem;
 }
 
 .chat-box {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 1.5rem;
     min-height: 150px;
-    margin-bottom: 0.5rem;
 }
 
 /* Message Styles */
 .message {
-    padding: 1rem;
+    padding: 1.5rem;
     border-radius: 8px;
     width: 100%;
     box-sizing: border-box;
@@ -103,18 +101,13 @@ main {
 }
 
 .message.placeholder {
-    background-color: var(--card-background);
-    border: 1px solid var(--border-color);
+    background-color: var(--placeholder-color);
+    opacity: 0.7;
     text-align: center;
     font-style: italic;
-    padding: 1.5rem;
-    margin: 0;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
     border-radius: 8px;
-    color: var(--secondary-color);
-    min-height: 100px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .message.transcription {
@@ -149,12 +142,11 @@ main {
     text-align: center;
     color: var(--secondary-color);
     font-size: 1rem;
-    padding: 0.75rem;
-    margin: 0.75rem 0;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
     background-color: var(--card-background);
     letter-spacing: 0.02em;
     line-height: 1.5;
-    border-radius: 8px;
 }
 
 .processing-prompt .transcript-link {
@@ -250,7 +242,7 @@ main {
     display: flex;
     gap: 1rem;
     flex-wrap: wrap;
-    padding-top: 0.5rem;
+    padding-top: 1rem;
     animation: fadeIn 0.3s ease-out;
 }
 
@@ -285,8 +277,8 @@ main {
     display: flex;
     gap: 1rem;
     justify-content: center;
-    padding: 1rem;
-    margin: 0;
+    padding: 1.25rem;
+    margin-bottom: 0;
     background-color: var(--card-background);
     border-radius: 8px;
     border: 1px solid var(--border-color);
@@ -323,13 +315,11 @@ main {
 
 /* Audio Preview */
 .audio-preview {
-    padding: 1rem;
-    margin: 0;
+    padding: 1.25rem;
+    margin-bottom: 0;
     background-color: var(--card-background);
     border-radius: 8px;
     border: 1px solid var(--border-color);
-    width: 100%;
-    box-sizing: border-box;
 }
 
 .audio-preview audio {
@@ -344,23 +334,23 @@ main {
 /* Status Message */
 .status-message {
     display: none;
-    width: 50%;
-    max-width: 600px;
-    padding: 0.75rem;
-    margin: 0.5rem auto 0;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1.25rem;
     background-color: var(--card-background);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     color: var(--secondary-color);
     font-size: 0.9rem;
     text-align: center;
-    box-sizing: border-box;
     order: 999;
 }
 
 /* Show status message when it has content */
 .status-message:not(:empty) {
     display: block;
+    margin-top: 0.75rem;
 }
 
 /* Animations */
@@ -536,7 +526,7 @@ main {
     display: flex;
     gap: 1rem;
     flex-wrap: wrap;
-    padding-top: 0.5rem;
+    padding-top: 1rem;
     animation: fadeIn 0.3s ease-out;
 }
 
@@ -562,15 +552,12 @@ main {
     padding: 0.75rem;
     background-color: var(--card-background);
     border-radius: 8px;
-    box-sizing: border-box;
 }
 
 .audio-controls {
     display: flex;
     align-items: center;
     gap: 1rem;
-    width: 100%;
-    box-sizing: border-box;
 }
 
 .play-button {
@@ -655,12 +642,11 @@ audio::-webkit-media-controls-mute-button:hover {
 
 .recording-duration {
     text-align: center;
-    padding: 0.75rem;
+    padding: 1rem;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 1rem;
-    margin: 0;
 }
 
 .recording-duration .time-display {

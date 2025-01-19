@@ -457,20 +457,7 @@ function stopRecording() {
             return;
         }
 
-        setLoading(true, 'Transcribing audio...');
-        const loadingMessages = [
-            "Converting speech to text...",
-            "Processing audio content...",
-            "Generating transcription...",
-            "Almost there..."
-        ];
-        let messageIndex = 0;
-        
-        // Start message rotation
-        const messageInterval = setInterval(() => {
-            messageIndex = (messageIndex + 1) % loadingMessages.length;
-            document.body.setAttribute('data-loading-text', loadingMessages[messageIndex]);
-        }, 2000);
+        updateStatus('Transcribing audio...');
         
         try {
             // Convert blob to base64
@@ -507,9 +494,6 @@ function stopRecording() {
         } catch (error) {
             console.error('Error transcribing audio:', error);
             updateStatus('Error transcribing audio: ' + error.message);
-        } finally {
-            clearInterval(messageInterval);
-            setLoading(false);
         }
     }
 

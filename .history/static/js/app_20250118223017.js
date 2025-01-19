@@ -599,40 +599,15 @@ function stopRecording() {
 
     function updateStatus(message) {
         console.log('Status:', message);
+        const status = document.querySelector('.status-message');
         if (status) {
             if (message) {
                 status.textContent = message;
                 status.style.display = 'block';
-                
-                // Find the last visible element based on the current page state
-                let lastVisibleElement;
-                
-                // Check for audio preview (recording or playback state)
-                const audioPreview = document.getElementById('audioPreview');
-                if (audioPreview && audioPreview.style.display !== 'none') {
-                    lastVisibleElement = audioPreview;
-                } else {
-                    // Check for transcription message with processed content
-                    const transcriptionMsg = chatBox.querySelector('.message.transcription');
-                    if (transcriptionMsg) {
-                        if (transcriptionMsg.classList.contains('has-processed')) {
-                            // If showing processed content, find the button container
-                            const buttonContainer = transcriptionMsg.querySelector('.button-container');
-                            lastVisibleElement = buttonContainer || transcriptionMsg;
-                        } else {
-                            // If showing transcription, find the message actions
-                            const messageActions = transcriptionMsg.querySelector('.message-actions');
-                            lastVisibleElement = messageActions || transcriptionMsg;
-                        }
-                    }
-                }
-                
-                // Insert status message after the last visible element
-                if (lastVisibleElement) {
-                    lastVisibleElement.after(status);
-                } else {
-                    // Fallback to chat box if no specific element is found
-                    chatBox.appendChild(status);
+                // Move status message after the chat box
+                const chatBox = document.querySelector('.chat-box');
+                if (chatBox && chatBox.parentNode) {
+                    chatBox.parentNode.insertBefore(status, chatBox.nextSibling);
                 }
             } else {
                 status.textContent = '';
