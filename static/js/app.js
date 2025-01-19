@@ -331,28 +331,44 @@ async function startRecording() {
         const durationDisplay = audioPreview.querySelector('.current-time');
         const waveBars = audioPreview.querySelectorAll('.wave-bar');
         
+        let isAnimating = false;
+
         function updateWaveform() {
-            if (!analyser || !dataArray || !isRecording) return;
+            if (!analyser || !dataArray) return;
             
             analyser.getByteFrequencyData(dataArray);
             
             // Use 5 frequency bands for the 5 bars
             for (let i = 0; i < waveBars.length; i++) {
                 const value = dataArray[i * 2];
-                const height = Math.max(3, (value / 255) * 45); // Reduced max height to 45%
+                const height = Math.max(3, (value / 255) * 45);
                 waveBars[i].style.height = `${height}%`;
             }
             
-            animationFrame = requestAnimationFrame(updateWaveform);
+            if (isRecording && !isAnimating) {
+                isAnimating = true;
+                animationFrame = requestAnimationFrame(updateWaveform);
+            }
         }
-        
-        updateWaveform();
-        
+
+        // Start the waveform animation
+        function startWaveform() {
+            isAnimating = false;
+            updateWaveform();
+        }
+
+        startWaveform();
+
         recordingTimer = setInterval(() => {
             recordingDuration = (Date.now() - recordingStartTime) / 1000;
             const minutes = Math.floor(recordingDuration / 60);
             const seconds = Math.floor(recordingDuration % 60);
             durationDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Ensure wave animation is running
+            if (isRecording && !isAnimating) {
+                startWaveform();
+            }
         }, 100);
 
         // Collect audio data more frequently on mobile
@@ -365,7 +381,9 @@ async function startRecording() {
         mediaRecorder.addEventListener('stop', async () => {
             console.log('Recording stopped, processing audio...');
             clearInterval(recordingTimer);
-            cancelAnimationFrame(animationFrame);
+            if (animationFrame) {
+                cancelAnimationFrame(animationFrame);
+            }
             if (audioContext) {
                 audioContext.close();
             }
@@ -472,7 +490,9 @@ function stopRecording() {
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
         try {
             clearInterval(recordingTimer);
-            cancelAnimationFrame(animationFrame);
+            if (animationFrame) {
+                cancelAnimationFrame(animationFrame);
+            }
             isRecording = false;
             
             // Ensure clean stop of media recorder
