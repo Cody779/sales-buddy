@@ -39,7 +39,19 @@ let audioChunks = [];
     // Event Listeners
     if (recordButton) {
         console.log('Setting up record button');
-        recordButton.addEventListener('click', startRecording);
+        // Add both click and touchend events for better mobile compatibility
+        ['click', 'touchend'].forEach(eventType => {
+            recordButton.addEventListener(eventType, (e) => {
+                e.preventDefault(); // Prevent any default behavior
+                if (e.type === 'touchend') {
+                    // Prevent click from firing if this was a touch event
+                    e.preventDefault();
+                    e.target.click();
+                    return;
+                }
+                startRecording();
+            });
+        });
     }
     if (stopButton) {
         console.log('Setting up stop button');
@@ -247,18 +259,24 @@ let audioChunks = [];
 }
 
 async function startRecording() {
-    console.log('Starting recording...');
+    console.log('Record button clicked, checking state...');
+    
+    // Check if already recording
+    if (isRecording) {
+        console.log('Already recording, ignoring click');
+        return;
+    }
 
     // Check if there's an existing transcription
     const existingMessage = chatBox.querySelector('.message.transcription');
     if (existingMessage) {
-        // Force dialog to appear on mobile by using window.confirm
+        console.log('Found existing transcription, showing confirmation');
         const confirmNew = window.confirm('This will replace your existing transcription. Do you want to continue?');
         if (!confirmNew) {
             console.log('User cancelled new recording');
             return;
         }
-        // Clean up old transcription
+        console.log('User confirmed, removing old transcription');
         existingMessage.remove();
         currentTranscription = '';
         currentProcessed = '';
